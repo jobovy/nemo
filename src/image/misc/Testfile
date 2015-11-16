@@ -1,0 +1,53 @@
+DIR = src/image/misc
+BIN = ccdplot ccdstat ccdmom ccdsub ccdrow
+NEED = $(BIN)  ccdmath
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -f ccd.in ccdmom.in
+
+#	power of function and contour levels to plot with
+P = 1.1
+C=0.01,0.1,1:9,9.9,9.99 
+
+all:	$(BIN)
+
+ccd.in:
+	@echo Creating $@
+	$(EXEC) ccdmath out=ccd.in "fie=10/sqrt((abs(%x-31.5))**$(P)+(abs(%y-31.5))**$(P))" size=64,64,1
+
+N = 2
+ccdmom.in:
+	@echo Creating $@
+	$(EXEC) ccdmath out=ccdmom.in "fie=%x+2*%y+4*%z" size=$(N),$(N),$(N)
+
+
+ccdplot: ccd.in
+	@echo Running $@
+	$(EXEC) ccdplot ccd.in $(C) yapp=$(YAPP) ; nemo.coverage ccdplot.c
+
+ccdstat: ccd.in
+	@echo Running $@
+	$(EXEC) ccdstat ccd.in ; nemo.coverage ccdstat.c
+
+ccdsub: ccd.in
+	@echo Running $@
+	$(EXEC) ccdsub ccd.in - 10:20 10:20 |  $(EXEC) ccdstat - ; nemo.coverage ccdsub.c ccdstat.c
+
+ccdrow: ccd.in
+	@echo Running $@
+	$(EXEC) ccdrow ccd.in - row=0 |  $(EXEC) ccdstat - ; nemo.coverage ccdrow.c ccdstat.c
+
+ccdmom: ccdmom.in
+	@echo Running $@
+	$(EXEC) ccdmom ccdmom.in - 1 | $(EXEC) ccdstat - ; nemo.coverage ccdmom.c ccdstat.c
+	$(EXEC) ccdmom ccdmom.in - 2 | $(EXEC) ccdstat - ; nemo.coverage ccdmom.c ccdstat.c
+	$(EXEC) ccdmom ccdmom.in - 3 | $(EXEC) ccdstat - ; nemo.coverage ccdmom.c ccdstat.c
+
+

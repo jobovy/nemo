@@ -1,0 +1,105 @@
+.TH CCDSMOOTH 1NEMO "10 May 2010"
+.SH NAME
+ccdsmooth \- smoothing of an image map (2D or 3D)
+.SH SYNOPSIS
+.PP
+\fBccdsmooth in=\fPimage \fBout=\fPimage [parameter=value]
+.SH DESCRIPTION
+\fIccdsmooth\fP will smooth an image cube through a simple direct convolution
+(no FFT). The smoothing beam must be circular/spherical, or smoothing
+must be done independantly per coordinate by calling \fIccdsmooth\fP
+multiple times using the \fBdir=\fP keyword (see below).
+.PP
+For more artistic versions of a smoothing operation, such as added
+noise and diffraction spikes for bright stars, see \fIccddiffract(1NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIin-file\fP
+input file, in \fIImage(5)\fP format [no default]
+.TP
+\fBout=\fIout-file\fP
+output file, will be in \fIImage(5)\fP format [no default]
+.TP
+\fBgauss=\fIvalue\fP
+Beam size (FWHM, note FWHM = 2*sqrt(2*ln(2)) = 2.355 * sigma) of a 
+gaussian smoothing
+kernel. Note this is size of the used smoothing kernel, NOT the resulting
+beam in the output map.
+If this parameter is used, the parameter \fBsmooth\fP is
+ignored [default: not used].
+.TP
+\fBdir=x|y|z\fP
+Direction of smoothing. This gives the flexibility of smoothing in
+x, y and/or z separately. Note that when smoothing in more than one
+coordinate the \fIbeam\fP is forced to be the same in each dimension
+[default: xy].
+.TP
+\fBsmooth=\fIarray\fP
+Smoothing array, should be at least 1 number, prefarably normalized 
+to unity for sake for conservation of units (mass per unit square
+length). The program does not normalize the beam to unity.
+Example is e.g. the Hanning smoothing: "0.25,0.5,0.25".
+[default: \fB0.25,0.5,0.25\fP]. This parameter is only used if
+\fBgauss\fP parameter is not used.
+.TP
+\fBnsmooth=\fIvalue\fP
+Number of times the above smoothing kernel is applied over the data.
+[default: \fB1\fP].
+.TP
+\fBbad=\fIbad_value\fP
+Input pixel value which to skip in smoothing.
+[Default: not used]
+.TP
+\fBcut=\fIcutoff_value\fP
+Value at which to cutoff the gaussian beam. 
+[Default: \fB0.01\fP]
+.SH "SEE ALSO"
+ccdfill(1NEMO), ccddiffract(1NEMO), snapccd(1NEMO), snapsmooth(1NEMO), snapgrid(1NEMO), image(5NEMO)
+.SH TIMING
+.nf
+.ta +1.0i
+With 68881 on SUN 3/50 (~16Mhz) and 200*200 map - old program (pre-V2.1)
+Nbeam=17	54s
+Nbeam=33	98s
+Nbeam=47	140s
+.SH HANNING
+The following are the weights needed in smooth= for subsequent hanning smoothings:
+.nf
+1: 0.25,0.5,0.25
+2: 0.0625,0.25,0.375,0.25,0.0625 
+3: 0.015625,0.09375,0.234375,0.3125,0.234375,0.09375,0.015625 
+4: 0.00390625,0.03125,0.109375,0.21875,0.273438,0.21875,0.109375,0.03125,0.00390625 
+.fi
+and these results in a reduction of the RMS by 0.61, 0.52, 0.47 and 0.44 resp.
+Note this is not the official Hanning definition (0.5-0.5 cos(2.pi.N/(M-1))). 
+.nf
+1: 0.25,0.5,0.25
+2: 0.08333333,0.25,0.33333333,0.25,0.08333333
+3: 0.03661165,0.125,0.21338835,0.25,0.21338835,0.125,0.03661165,
+4: 0.0190983,0.0690983,0.1309017,0.1809017,0.2,0.1809017,0.1309017,0.0690983,0.0190983
+5: 0.01116455,0.04166667,0.08333333,0.125,0.15550212,0.16666667,0.15550212,0.125,0.08333333,0.04166667,0.01116455
+.fi
+which reduce the RMS by 0.61, 0.49, 0.43, 0.38 and 0.34 resp.
+.SH BUGS
+Smoothing a map which has already been smoothed will result in an incorrect
+header - this would be a simple sum of squares, if the beams are aligned with the axis.
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+src/image/trans     	ccdsmooth.c
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+29-jun-87	V1.0: Created as module from CCD program	PJT
+30-Jun-87	V1.1: improved 'struct' filestructure      	PJT
+ 9-jul-87	V1.2: keyword 'dir' and keyword order changed	PJT
+ 1-jun-88	V2.0: new filestruct, although code is same	PJT
+ 5-feb-89	V2.2: general 3D smoothing                	PJT
+11-sep-91	some additional comments                	PJT
+12-mar-98	V3.1: added cut=, fixed fwhm=0.0         	PJT
+.fi

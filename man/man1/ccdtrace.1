@@ -1,0 +1,57 @@
+.TH CCDTRACE 1NEMO "26 July 2015"
+.SH NAME
+ccdtrace \- interpolate a set of coordinates from an image
+.SH SYNOPSIS
+\fBccdtrace\fP [parameter=value]
+.SH DESCRIPTION
+\fBccdtrace\fP takes a set of (X,Y) coordinates, in the form
+of an ascii \fItable(1NEMO)\fP, and interpolates them from an
+\fIimage(1NEMO)\fP. The output will also be in standard table
+format. The input coordinate must be in the physical coordinates
+of the input image, as defined by Xmin/Ymin/Dx/Dy coordinates
+(see \fItsf(1NEMO)\fP to view them). Sky image copied via
+FITS can sometimes have unexpected units. See also \fIfits(5NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP\fIimage\fP
+Input Image(5NEMO) file. Currently only 2D images are supported,
+for 3D cubes the first plane could be used. 
+No default.
+.TP
+\fBout=\fP\fIxyi_table\fP
+Output table of X,Y,I coordinates. 
+No default.
+.TP
+\fBxytab=\fP\fIxy_table\fP
+Input table of X,Y coordinates (in units of the WCS of the input image).
+No default.
+.TP
+\fBnmax=\fP
+Allocation space for input XY table, if needed. This value is
+only needed when the XY table is read from a device which cannot
+seek (e.g. a pipe).
+Default: 10000.
+.TP
+\fBcumul=t|f\fP
+Add a 4th column in the output which is the culumative length, in the
+native units. Default: f
+.TP
+\fBwcs=t|f\fP
+By default, the table is assumed to be in WCS (the units used in the image),
+but with wcs=f you can use pixel coordinates.
+.SH FILES
+src/nbody/evolve/flowcode/ccdtrace.c
+.SH SEE ALSO
+ccdprint(1NEMO), tsf(1NEMO), image(5NEMO), fits(5NEMO), ccdfits(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+31-jul-96	V1.0 Created     	Peter Teuben
+26-sep-2001	V1.0a updated doc, fixed code for file_lines	PJT
+26-jul-2015	V1.1 added cumul=t option	PJT
+26-jul-2015     V1.2 added wcs=f option		PJT
+.fi

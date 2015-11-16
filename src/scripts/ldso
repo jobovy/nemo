@@ -1,0 +1,98 @@
+#! /bin/csh -f
+#   make a shared object for the dynamic object loader
+#   should work on most system - on some systems (old sun3/4) it's a no-op
+#   See also:  http://fortran-2000.com/ArnaudRecipes/sharedlib.html
+#
+#   13-dec-95   created for dec alpha, and quickly got the SGI working too
+#   29-jun-96   fixed SGI since we sort of use one NEMOHOST now
+#   22-oct-96   added linux ELF
+#    1-apr-97   I never added -shared to SGI...
+#    1-apr-01   changed .o to .so for shared objects now (NEMO V3)
+#   20-jun-01   sgi better detected
+#    1-jul-01   documented -G for solaris
+#   30-jun-03   finally some info on darwin's 'bundles'
+#   17-sep-03   using g++ for linux, instead of ld
+#    9-oct-03   using g++ for darwin too
+#   17-nov-05   hpux note; solaris use copy, not move
+#   15-apr-06   make compiler names more consistent with makedefs
+#
+# @todo    see also 'otool' for mac
+
+if ($#argv == 0) then
+  echo "Usage: $0 <BASENAME>"
+  echo NEMO V3 system utility that converts an object file BASENAME.o 
+  echo into a shared object file BASENAME.so.
+  exit 0
+endif
+
+if (! -e $1.o) then
+  echo File $1.o does not exist
+  exit 1
+endif
+
+if ($?CXX == 0) then
+  # yuck
+  set mk=/tmp/tmp$$.mk
+  echo 'include $(NEMOLIB)/makedefs' > $mk
+  echo 'cxx:' >> $mk
+  echo '	@echo $(CXX)' >> $mk
+  set CXX=`make -s --no-print-directory -f $mk cxx`
+  echo CXX=$CXX
+  rm -f $mk
+endif
+
+#set log=/tmp/ldso$$.log
+set log=/dev/null
+
+switch ($NEMOHOST)
+  case *alpha* :
+    ld -shared $1.o -o $1.so >& $log
+    if ($status) goto error1
+    # remove temp file
+    rm -f so_locations
+    breaksw
+  case *darwin*:
+    if ($?CXX == 0) set CXX=g++
+    $CXX -flat_namespace -bundle -undefined suppress -o $1.so $1.o >& $log
+    if ($status) goto error1
+    breaksw
+  case *sgi* :
+    ld -shared $1.o -o $1.so >& $log
+    if ($status) goto error1
+    breaksw
+  case *linux* :
+    # should add '-fpic' to the compile options
+    #ld -shared -o $1.so $1.o >& $log
+    if ($?CXX == 0) set CXX=g++
+    $CXX -shared -o $1.so $1.o >& $log
+    if ($status) goto error1
+    breaksw
+  case *sparc* :
+    # although a straight copy seems to work for solaris, this is what
+    # the man pages claim you should do
+    ld -G -o $1.so $1.o >& $log
+    if ($status) goto error1
+  case hpux:
+    # some HP-UX versions this is "sl" 
+    goto error1
+  default:
+    #   e.g. solaris .o files can be shared
+    cp $1.o $1.so
+    breaksw
+endsw
+
+exit 0
+
+# 				problematic exits
+
+error1:
+  echo "### Error: $0 problem make shared object for $*"
+  exit 1
+
+error2:
+  echo "### Error: $0 problem renaming $1.so to $1.o"
+  exit 2
+
+error3:
+  echo "### Error: $0 unimplemented feature to make $1.sl"
+  exit 3

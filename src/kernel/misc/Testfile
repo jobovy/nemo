@@ -1,0 +1,49 @@
+DIR = src/kernel/misc
+BIN = xrandom nemoinp linreg
+NEED = $(BIN) tabmath
+
+help:
+	@echo Directory $(DIR)
+
+need:
+	@echo $(NEED)
+
+all:	xrandom nemoinp
+
+clean: 
+	@echo Cleaning $(DIR)
+	@rm -f core
+
+xrandom:
+	@echo Running xrandom
+	@echo uniform seed=5 n=5
+	$(EXEC) xrandom seed=5 n=5 report=t		; nemo.coverage xrandom.c
+	@echo gauss seed=5 n=5
+	$(EXEC) xrandom seed=5 n=5 gauss=t report=t	; nemo.coverage xrandom.c
+
+xrandom_bench:
+	@echo Different centisecond runs on one line:
+	@xrandom -1;xrandom -1;xrandom -1;xrandom -1;xrandom -1;\
+	xrandom -1;xrandom -1;xrandom -1;xrandom -1;xrandom -1
+	@echo Different centisecond runs on different line:
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+	@xrandom -1
+
+
+nemoinp:
+	@nemoinp 'sqrt(2)'
+	$(EXEC) nemoinp 1:10:2 newline=f	 ; nemo.coverage nemoinp.c
+	@echo ""
+	
+
+linreg:
+	@nemoinp 1:10 | tabmath - - '%1+rang(0,0.5)' seed=123 > linreg.tab
+	$(EXEC) linreg linreg.tab

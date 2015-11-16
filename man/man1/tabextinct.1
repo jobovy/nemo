@@ -1,0 +1,86 @@
+.TH TABEXTINCT 1NEMO "16 May 2005"
+.SH NAME
+tabextinct \- extinct a spectrum
+.SH SYNOPSIS
+\fBtabextinct\fP [parameter=value]
+.SH DESCRIPTION
+\fBtabextinct\fP takes a model extinction curve (defined as a simple table with
+C as function of wavelength) and applies it to an input spectrum. Although
+the model MUST have the wavelength and extinction in columns 1 and 2, the
+columns in the input spectrum can be selected. The output is a simple table
+with only two columns: wavelength and extincted spectrum.
+.PP
+A spline interpolation is used into the extinction curve to find the appropriate
+extinction at the requested wavelenghts of the spectrum. Therefore the
+extinction model should cover the whole spectrum, currently the program
+does not allow otherwise. Extincton occurs with the standard formulae
+.PP
+.nf
+        S = S0 . 10**(-0.4 * Av * C(lambda))
+.fi
+.PP
+Using \fBxscale=\fP and \fByscale=\fP the input spectrum can be scaled
+to match that of the model.
+.PP
+This program can also be used to multiply two curves with each other, 
+using \fBextinct=f\fP.
+
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBmodel=\fP
+Extinction model (table with C(wave) in col 1/2)
+.TP 20
+\fBin=\fP
+Input spectrum table file [???]   
+.TP
+\fBxcol=\fP
+Wavelength column for spectrum [1]   
+.TP
+\fBycol=\fP
+Flux column for spectrum [2]   
+.TP
+\fBxscale=\fP
+Scale factor applied to input spectrum wavelength in order to match that
+of the model. [Default 1]
+.TP
+\fByscale=\fP
+Scale factor applied to input spectrum flux for your preferred 
+flux scaling. [Default: 1]
+.TP
+\fBxmin=\fP
+(Wavelength) value below which no data are printed or used. 
+This is useful if your input spectrum has a broad range you are
+not interested in.
+Default: not used
+.TP
+\fBxmax=\fP
+(Wavelength) value above which no data are printed or used. 
+Default: not used
+.TP
+\fBAv=\fP
+Av to apply extinction curve with [1] 
+.TP
+\fBextinct=\fP
+Extinction law (t), or a simple linear law (f)
+[Default: t]
+.SH EXAMPLES
+.nf
+  % tabextinct model=model1.tab in=spectrum.tab Av=2.3 > spectrum23.tab
+.fi
+.SH SEE ALSO
+tabfilter(1NEMO), tabmath(1NEMO)
+.SH FILES
+.nf
+.ta +3i
+http://www.astro.princeton.edu/~draine/dust/dustmix.html	example extincton tables
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+13-May-05	V0.1 Created on Friday 13th, so don't expect too much	PJT
+16-may-06	V0.3 added xmin/xmax	PJT
+.fi

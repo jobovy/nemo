@@ -1,0 +1,110 @@
+.TH BSWAP 1NEMO "20 September 2005"
+.SH NAME
+bswap \- swap bytes in a file
+.SH SYNOPSIS
+\fBbswap\fP [parameter=value]
+.SH DESCRIPTION
+\fBbswap\fP swaps the bytes in a file. This can be
+useful if the file was copied between different endian machines
+(e.g. Sparc-Solaris and pc-linux),
+and consists of a homogeneous datatype. (most NEMO files,
+e.g. those made via \fIfilestruct(5NEMO)\fP are
+notable example where you cannot use this technique, though NEMO's
+binary files swap on-the-fly if they detect them to be
+originating from another endian-type machine).
+.PP
+This program also has a few keyword to aid benchmarking file I/O
+and different sized word swapping speed. The reported speed
+will be in Mswaps (mega word swaps per second).
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input file to read and swap bytes of. No default.
+.TP
+\fBout=\fP
+Output filename for which all the bytes have been swapped.
+If no filename given, data will not be written, and CPU
+usage will be reported. Default: no output.
+.TP
+\fBlen=\fP
+Itemlength in bytes during swapping . Common are 2, 4 and 8, for
+which the code is optimized. Any other (even) number can be handled
+too though. [Default: \fB2\fP].
+.TP
+\fBoneswap=t|f\fP
+One swap call? Only useful to set false under benchmark circumstances.
+[Default: \fBt\fP].
+.TP
+\fBoffset=\fP
+Offset (in bytes) before which no swapping is done.
+[Default: \fB0\fP].
+.TP
+\fBendian=\fP
+If used, the input file will be assumed of this type of endian.
+Options are thus 'big' (e.g. sparc, powerpc) or 'little' (e.g. i385) 
+endian.
+Depending on what kind of machine you are, this could result in a 
+no-operation. 
+By default this option is not used and swapping is always applied.
+.TP
+\fBmemcpy=t|f\fP
+Test swapping data as 8-byte doubles via memcpy. len=8 is required for
+this to work. Default:f 
+.TP
+\fBrepeat=\fP\fIrepeat-count\fP
+Number of times to repeat swapping all the words, 
+only good for more accurate benchmarking. Default: 0
+.SH BUGS
+Be careful with pipes, they don't seem to work on an input file yet.
+.SH EXAMPLES
+The following example will byte-swap a binary file with only 4-byte 
+data (INTEGER*4, REAL*4) created using fortran unformatted I/O from the 
+following statement:
+.nf
+	PROGRAM junk
+	INTEGER MAXP,i,np,nv
+	PARAMETER (MAXP=100)
+	REAL x(MAXP), y(MAXP), z(MAXP)
+
+	np=10
+	nv=3
+	OPEN(1,FILE='junk.dat',FORM='unformatted')
+	WRITE(1) np,nv
+	WRITE(1) (x(i),i=1,np),(y(i),i=1,np),(z(i),i=1,np)
+	CLOSE(1)
+
+	END
+.fi
+with \fIunfio(1NEMO)\fP one can see the blocks, and optionally data:
+.nf
+    $ unfio junk.dat
+    1   8
+    2   120
+    $ unfio junk.dat block=1
+    10
+    3
+.fi
+If this file was created on a machine of which the endianism is reversed
+from the machine where it is being read, the \fBunfio\fP would have
+returned nothing, it would need to be swapped with \fBlen=4\fP:
+.nf
+    $ bswap junk.dat junks.dat 4
+.fi
+This above example is a bit contrived, since \fIunfio(1NEMO)\fP also
+has a \fBswap=\fP keyword to read files from the opposite endianism machine.
+.SH SEE ALSO
+filestruct(5NEMO), unfio(1NEMO), dd(1), bswap(3NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+27-Feb-94	V1.1b Documented	PJT
+23-feb-97	V1.3 allow offset before swapping starts	PJT
+15-dec-98	V1.4 add streaming mode to I/O    	PJT
+6-jun-01	more verbosities, plus an example	PJT
+30-sep-03	V1.5 added memcpy=, repeat=	PJT
+20-sep-05	V1.6 added endian=	PJT
+.fi

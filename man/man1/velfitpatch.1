@@ -1,0 +1,68 @@
+.TH VELFITPATCH 1NEMO "27 July 2015"
+.SH NAME
+velfitpatch \- fit local linear velocity field 
+.SH SYNOPSIS
+\fBvelfitpatch\fP [parameter=value]
+.SH DESCRIPTION
+\fBvelfitpatch\fP fits a local linear velocity field 
+(v = vc + ox * x + oy * y) to a small square region around
+each point in a velocity field. Output can be specified to
+be in linear gradients (ox,oy) or a radial,position angle (om,pa)
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+input velocity field. No default.
+.TP
+\fBout=\fP
+basename for 3 output files (vc,ox,oy) or (vc,om,pa). See \fmode\fP.
+.TP
+\fBpatch=\fP
+Patch (size of box will be 2*patch+1) [3]
+.TP
+\fBscale=\fP
+Scale factor for gradients [1]   
+.TP
+\fBblank=\fP
+Blank Value in velocity field [0.0]  
+.TP
+\fBmode=\fP
+Output mode (xy derivates, vs. gp (gradient/positionangle) [xy]
+.TP
+\fBtab=\fP
+If given, tabular output file name [] 
+.SH EXAMPLES
+Here is an example of following the velocities along a set of (x,y) positions in a map:
+.nf
+    velfitpatch in=mom1 out=fit1 mode=rt
+    ccdtrace fit1.vc fit1.vctab xytrace.tab wcs=f cumul=t
+    ccdtrace fit1.om fit1.omtab xytrace.tab
+    ccdtrace fit1.pa fit1.patab xytrace.tab
+    paste fit1.vc fit1.om fit1.pa | awk '{print $4,$3,$7,$10}' > fit1.vop
+.fi
+resulting in a file \fIfit1.vop\fP, with columns  L,Vc,Omega,P.A,
+where L is the length along the trace. Watch out for units. See \fIccdtrace(1NEMO)\fP
+for more info on units.
+.PP
+If a curve needs to be spline interpolated, one method can be to spline smooth the X and Y
+independantly:
+.nf
+  ccdtrace fit-a.vc - curve.tab wcs=f cumul=t 
+  # note it goes from 0 to 160 pixels (for example)
+  # we are then resample along the curve from 0 to 160 pixels in steps of 5 pixels
+  ccdtrace fit-a.vc - curve.tab wcs=f cumul=t | tabspline - 4 1 0:160:5 | tabmath - - delcol=1 > x.tab
+  ccdtrace fit-a.vc - curve.tab wcs=f cumul=t | tabspline - 4 2 0:160:5 | tabmath - - delcol=1 > y.tab
+  paste x.tab y.tab > curve-xy.tab
+  # now we have a smoother curve-xy.tab table for input to 
+.fi
+.SH SEE ALSO
+rotcur(1NEMO), ccdtrace(1NEMO), image(5NEMO)
+.SH FILES
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+26-Jul-15	V0.1 Created	PJT
+.fi

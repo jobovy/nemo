@@ -1,0 +1,22 @@
+#! /bin/csh
+#
+#   @WARNING@
+#
+#   nemo_start:
+#
+#   source this file to start NEMO. You can override the root by presetting NEMO.
+# 
+#   this file reads nemo.rc, which is a control file that source the following
+#   files (and checke for their precense) in the order given
+#         NEMORC
+#         NEMORC.local
+#
+
+#  set a reasonable NEMO if it's not present  (from original dir hostinstallation)
+#  if you mannually patch this value, also be sure to look in the following files:
+#        $NEMOLIB/makedefs   (derived from $NEMO/makedefs)
+#        $NEMO/NEMORC.local  (derived from $NEMO/NEMORC.gen)
+#
+if ($?NEMO == 0) setenv NEMO @NEMO@
+
+source $NEMO/nemo.rc

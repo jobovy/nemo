@@ -1,0 +1,286 @@
+#! /bin/csh -f
+#
+#  Install PGPLOT from dir=$NEMO/local/pgplot into lib=$NEMOLIB
+#
+#  NOTE: Although meant for ease of install within $NEMO, you 
+#  may also find this file within the WIP distribution.
+#  The master version should however stay within NEMO
+#  
+#
+#  3-apr-01	allowed final directory also to be configurable
+#		and some NEMO V3 support added
+#  9-apr-01     added support if file= is given to directly specify pgplot tar ball
+# 11-jun-01     for new pgplot file name convention (520, 521, 522....)
+# 11-jan-02     also allow pgplot directory in $NEMO/local/pgplot
+#  9-apr-02     fixed caltech links
+#  5-dec-02     added tcl/tk driver for carma
+# 29-jun-03     added darwin (tested w/ MacOSX 10.2)
+# 23-jan-04     fixed linux when CC and F77 present (e.g. intel compiler)
+# 27-mar-04     force rebuilding some executables upon reload (+typo fix)
+# 28-jun-04     debug option
+# 20-may-05     make script more generic, less dependant on NEMO, and distribute with WIP
+# 10-jul-05     removed the always problematic never used TKDRIV driver
+# 16-jul-05     removed pp,gi,wd from drivers for gfortran
+#  5-dec-05     abuse the new 4th (optional) argument to makemake
+# 31-aug-06     add optional png
+# 26-sep-06     use fix64bit.csh if on 64 bit (or use int8=1)
+# 25-oct-07     note that gcc 4.2.2 compiles GI/PP/
+# 16-aug-09     added support for Cygwin (JM)
+# 19-may-10     gfortran default, and option to use gif because of old gfortran41/40
+
+# Other places to get pgplot from
+# cvs -d :pserver:anonymous@cvs.starlink.ac.uk:/cvs co thirdparty/caltech/pgplot
+# ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot522.tar.gz   (or whichever version)
+#
+# E3D:  http://www.aip.de/Euro3D/E3D/PGPLOT_install_E3D.sh
+#
+# CARMA: 
+# cvs -d :pserver:anonymous@cvs.astro.umd.edu:/home/cvsroot co pgplot
+# wich has two versions:
+#    - this script
+#    - the autoconf'd configure script
+
+
+# Example standalone WIP install outside of MIRIAD or NEMO
+# ------------------------------------------------------------------------------------------
+#  cvs co wip
+#  cvs co pgplot
+#  set w=`pwd`
+#  wip/pgplot.install dir=$w lib=$w/lib host=linux
+#  rm lib/libpgplot.so
+#  cd wip
+#  ./makewip -pgplot $w/lib -wip $w/wip -bin $w/lib -xlib /usr/X11R6/lib -readline "" -wiphelp $w/lib
+#      (bug: wiphelp is kept in wip directory, not in lib)
+# ------------------------------------------------------------------------------------------
+
+
+# TODO:
+#   $F77 and $CC should be obtained from NEMO's configure process
+#
+
+#			 	.. command line keywords that can be modifid ..
+set version=522
+set ftp=ftp.astro.caltech.edu
+if ($?NEMO) then
+  set dir=$NEMO/local
+endif
+if ($?NEMOLIB) then
+  set lib=$NEMOLIB
+endif
+set drivers=CGDRIV,NUDRIV,PGDRIV,PSDRIV,XWDRIV
+#set drivers=CGDRIV,GIDRIV,NUDRIV,PGDRIV,PPDRIV,PSDRIV,WDDRIV,XWDRIV
+#set drivers_gfortran41=CGDRIV,NUDRIV,PGDRIV,PSDRIV,XWDRIV
+#set drivers_g95=CGDRIV,NUDRIV,PGDRIV,PPDRIV,PSDRIV,XWDRIV
+if ($?NEMOHOST) then
+  set host=$NEMOHOST
+endif
+set debug=0
+set png=0
+set int8=0
+set gif=1
+
+#  dir:  where the source code will be extracted
+#  lib:  where the library (PGPLOT_DIR) will be placed
+
+# USAGE?
+if (X$1 == X-h || X$1 == X--help) goto usage
+
+#				.. parse command line ..
+foreach arg ($*)
+   set check = `echo $argv[1] | awk -F= '{print NF}'`
+   if ("$check" == 1) break
+   echo Setting: $arg
+   set $arg
+end
+
+#  basic check of the command line arguments
+if ($?dir == 0) goto usage
+if ($?lib == 0) goto usage
+if ($?host == 0) goto usage
+
+if (! -e $lib) mkdir $lib
+if ($status) goto usage
+
+
+#  override the compiler default, but both 'f77' and 'cc' need to be set
+if ($?f77 && $?cc) then
+  setenv F77 $f77
+  setenv CC $cc
+endif
+
+#  handle new 4th and up arguments to makemake, quite an ugly hack....
+set new4=()
+if ($?F77) then
+  set base=(gfortran g77 ifc ifort g95)
+  foreach b  ($base)
+    echo $F77 | grep -q $b
+    if ($status == 0) then
+      set new4=($new4 $b=$F77)
+      setenv F77 $b
+      break
+    endif
+  end
+endif
+
+if ($?CC) then
+  set base=(gcc icc)
+  foreach b  ($base)
+    echo $CC | grep -q $b
+    if ($status == 0) then
+      set new4=($new4 $b=$CC)
+      setenv CC $b
+      break
+    endif
+  end
+endif
+
+if ($?new4) then
+  echo Note: using new4: $new4
+endif
+
+cd $dir
+
+if (-d pgplot) then
+  echo Assuming your $dir/pgplot is current
+else
+  if ($?file == 0) set file=$dir/pgplot${version}.tar.gz
+  if (! -e $file) then
+    echo No file $file, you need to pick it up, e.g.
+    echo ncftp ftp://ftp.astro.caltech.edu/pub/pgplot/pgplot${version}.tar.gz
+    echo Or use the improved MIRIAD cvs version 
+    exit 1
+  else
+    echo Found $file
+  endif
+  gunzip -dc $file | tar xf -
+endif
+
+cd pgplot
+cp drivers.list $lib
+cd $lib
+cp drivers.list new.list
+cp drivers.list old.list
+
+if ($png) set drivers=$drivers,PNDRIV
+if ($gif) set drivers=$drivers,GIDRIV,PPDRIV,WDDRIV
+
+echo Building drivers for $drivers
+
+foreach d (`echo $drivers | sed 's/,/ /g'`)
+   sed 's/\! '$d/$d/g < old.list > new.list
+   cp new.list old.list
+end
+
+mv new.list drivers.list
+rm old.list
+
+echo Renaming old X server to force it to rebuild
+if (-e pgxwin_server) mv pgxwin_server pgxwin_server.old
+
+switch ($host)
+  case *darwin*:
+    if ($?CC && $?F77) then
+      echo ${F77}_${CC}
+      $dir/pgplot/makemake  $dir/pgplot darwin ${F77}_${CC} $new4
+    else
+      $dir/pgplot/makemake   $dir/pgplot darwin gfortran_gcc
+    endif
+    breaksw
+  case SunOS:
+  case solaris*:
+  case sparc*:
+  case sun5:
+    if ($?CC && $?F77) then
+      echo ${F77}_${CC}
+      $dir/pgplot/makemake  $dir/pgplot sol2 ${F77}_${CC} $new4
+    else 
+      $dir/pgplot/makemake  $dir/pgplot sol2 f77_cc $new4
+    endif
+    # rm libpgplot.so
+    breaksw
+  case Linux:
+  case linux:
+  case *linux-gnu:
+    if (-e /usr/X11R6/lib64) then
+        echo Warning: found /usr/X11R6/lib64
+        set new4=($new4 /X11R6/lib=/X11R6/lib64)
+        set int8=1
+    endif
+    if ($?CC && $?F77) then
+        $dir/pgplot/makemake  $dir/pgplot linux ${F77}_${CC} $new4
+    else
+        $dir/pgplot/makemake  $dir/pgplot linux gfortran_gcc $new4
+    endif
+    if (! -e /usr/X11) then
+        echo You may need to patch your Linux distribution:
+        echo ln -s /usr/X11R6 /usr/X11
+    endif
+    breaksw
+  case sgi:
+    $dir/pgplot/makemake  $dir/pgplot irix
+    breaksw
+  case *cygwin:
+    if (-e /usr/X11R6) then
+        ln -s /usr/X11R6 /usr/X11R6.4
+	#
+	# for whatever reason, on Cygwin makefile created
+	# assumes /usr/X11R6.4
+	#
+    endif
+    #
+    # need to patch the file pgplot/pgdispd/proccom.c
+    #
+    if ( ! ( -e $dir/pgplot/pgdispd/proccom.c.orignal ) ) then
+      mv $dir/pgplot/pgdispd/proccom.c  $dir/pgplot/pgdispd/proccom.c.orignal
+      sed -e 's/#include <values.h>/ /g' $dir/pgplot/pgdispd/proccom.c.orignal >$dir/pgplot/pgdispd/proccom.c
+    endif
+    $dir/pgplot/makemake  $dir/pgplot  cygwin g77_gcc
+    breaksw
+  default:
+    if (-d $dir/sys_$host) then
+      $dir/pgplot/makemake  $dir/pgplot $host
+      breaksw
+    else
+      echo host=$host not supported yet
+      exit 1
+    endif
+endsw
+
+if ($int8) then
+  (cd $dir/pgplot/drivers; ./fix64bit.csh)
+endif
+
+make -i
+make -i cpg
+if ($debug == 0) then
+  make -i clean
+  \rm -fr pgdemo*
+endif
+
+#  may also need to change LD_LIBRARY_PATH with $NEMOLIB
+
+# set PGPLOT_DIR to $NEMOLIB
+
+exit 0
+
+
+
+usage:
+  echo "The most common non-NEMO usage will be:"
+  echo "get a pgplot directory in your current directory"
+  echo "and use/override any of the following commandline parameters:"
+  echo "  drivers=$drivers"
+  echo "  dir=`pwd`            directory within which pgplot/ resides"
+  echo "  lib=`pwd`/lib        directory where PGPLOT_DIR will be"
+  echo "  host=`uname -s`      host type (valid ones are in pgplot/sys_*)"
+  echo "  debug=0              clean demo example from lib"
+  echo "  cc=gcc               change a (supported) C compiler for this system"
+  echo "  f77=gfortran         change a (supported) Fortran compiler for this system"
+  echo "  int8=0               use INTEGER*8 in some drivers (e.g. gif)"
+  echo "  png=0                use PNG driver"
+  echo "  gif=1                use GIF/PP/WD if new (4.2 and up) gfortran"
+  echo ""
+  echo "   drivers=CGDRIV,GIDRIV,NUDRIV,PGDRIV,PPDRIV,PSDRIV,WDDRIV,XWDRIV"
+  echo "   will work again for gfortran V4.2.2"
+
+

@@ -1,0 +1,161 @@
+.TH YAPP 5NEMO "6 July 2001"
+.SH NAME
+yapp \- Yet Another Plotting Package
+.SH DESCRIPTION
+\fByapp\fP is NEMO's application programming interface \fIdefinition\fP
+for a graphics device.
+.PP
+Various implementations exist for \fByapp\fP, some of which are listed below.
+During installation one of them has been selected as your default
+implemention, with which all yapp-based graphics programs (a few
+programs, e.g. \fIxyzview(1NEMO)\fP) use other graphics device drivers).
+Currently (2001) most used at the PGPLOT and PS implementations.
+
+Hopefully one of them is close enough 
+(or exactly) for what you want. Note that most of them
+need to be linked (notable exceptions \fIyapp_null, yapp_ps, yapp_meta\fP)
+with site dependant external libraries. For this, the environment
+variable \fBYAPPLIB\fP needs to be defined. Most common graphics program
+can then be compiled as follows:
+.nf
+    cc -o prog prog.c $NEMOLIB/libnemo.a $YAPPLIB -lm
+.fi
+normally set through the $NEMO/NEMORC.local file (see \fInemorc(8NEMO)\fP)
+There are some
+example $YAPP_XXX environment variables defined in the $NEMO/NEMORC
+file.
+.PP
+Some yapp implementations allow you to select from
+various devices. As we do not advertise interactive programs
+very much, the keyword 'yapp=' or an environment variable
+\fBYAPP\fP will be used to select a device and it's possible
+options.
+.SH AVAILABLE YAPP VERSIONS
+.TP 24
+\fByapp\fP
+wrapper, which attempts (with or without some help) to include the
+correct yapp_xxx.c version (see below).
+.TP
+\fByapp_agl	\fP
+uses Trieste/ESO's AGL package.  \fINot implemented yet\fP.
+.TP
+\fByapp_cg		\fP
+pure color graphics version for suncore (JEB)
+.TP
+\fByapp_cg_old\fP
+slightly outdated color graphics (PSW & JEB).
+.TP
+\fByapp_cg_new\fP
+??? seems to hang terminal (oct-90)
+.TP
+\fByapp_cgi	\fP
+old 1986 experiment, uses CGI; must be outdated by now (PJT)
+.TP
+\fByapp_core	\fP
+The old original one (JEB), uses suncore, can have optional
+mouse interface (-DMOUSE) and retained segments (-DRETAINED).
+Working on color interface (-DCOLOR), see also yapp_cg below.
+.TP
+\fByapp_meta	\fP
+An ascii meta-file format.
+.TP
+\fByapp_mongo	\fP
+for usage when mongo(87) is available. Uses
+environment varibiable \fBYAPP\fP, initialized in the
+\fIgetparam(3NEMO)\fP package, to select from a number
+of devices.	(PJT)
+.TP
+\fByapp_null\fP
+a stubbed list of all required and optional routines which gets
+you going on a machine with no proper yapp implementation yet.
+.TP
+\fByapp_pgplot	\fP
+uses Tim Pierson`s (Caltech) PGPLOT package. We now support PGPLOT V5
+as well as an experimental version of CPGPLOT (PJT)
+.TP
+\fByapp_plplot	\fP
+uses the U. Texas PLPLOT package, a PGPLOT lookalike written in C. (PJT)
+.TP
+\fByapp_ps		\fP
+PostScript, merged with JEBs enhanced versions(PJT). Does not do color
+yet.
+.TP
+\fByapp_sm	\fP
+Super Mongo - not very good yet since sm doesn't have good
+callable provisions.	(PJT)
+.TP 
+\fByapp_suntools\fP
+Suntools version with enhanced cursor interaction; has optional
+-DMOUSE, -DCOLOR and -DRETAINED and autodetection of window vs.
+non-window mode under suntools. \fIdeprecated\fP.
+.TP
+\fByapp_sv\fP
+SunView version, in so-called implicit dispatch mode. This version
+is really only intended to create small images, to be saved in 
+screendump 'frame's, which can be displayed with the sunview windows
+version \fImoview(1NEMO)\fP.  \fIdeprecated\fP.
+.TP
+\fByapp_x11\fP
+Based on a standalone, now modified to handle singleprecision real (float).
+.SH BUGS
+There are no good provisions to make sure a plot comes out in landscape or
+portrait (e.g. plplot). Some devices have problems making sure that
+the plot comes out square when it is meant to be square.
+.PP
+Treatment of colors, in particular what the background and foreground
+color is, is not uniform. 
+.SH PGPLOT
+PGPLOT uses a number of environment variables that control the behavior
+of the plotting device. The PGPLOT_DIR, PGPLOT_FONT and PGPLOT_LIB variables
+(should) have been set via the normal NEMO procedure, but the following
+environment variables can be useful (and confusing):
+.nf
+.ta +2i +1i
+PGPLOT_BACKGROUND	n/a	0 is the background color ("black" for /xs)
+PGPLOT_FOREGROUND	n/a	1 is the foreground color ("white" for /xs)
+
+PGPLOT_GIF_WIDTH	850	pixels for /gif (interchange for /vgif)
+PGPLOT_GIF_HEIGHT	680	pixels for /gif (i.e. 85 dpi)
+
+PGPLOT_PPM_WIDTH	850	pixels for /ppm (interchange for /vppm)
+PGPLOT_PPM_HEIGHT	680	pixels for /ppm (i.e. 85 dpi)
+
+PGPLOT_PS_MARKERS	n/a	use "NO" if no postscript font for markers to be used
+PGPLOT_PS_COLOR		n/a	color mode
+PGPLOT_PS_WIDTH		7800	width in milli-inches (these are for 8.5x11 inches)
+PGPLOT_PS_HEIGHT	10500	height in milli-inches
+PGPLOT_PS_HOFFSET	350	horizontal offset from bottom left
+PGPLOT_PS_VOFFSET	250	vertical offset from bottom left
+
+PGPLOT_PS_EOF		n/a	EOF marker, useful for apple laserwriters (^D)
+PGPLOT_PS_BBOX		n/a	if set to "MAX", max bounding box written, else
+PGPLOT_IDENT		n/a	if set, user name, date and time written in bottom right corner
+PGPLOT_PS_DRAW_BBOX
+
+.fi
+For X windows drivers (e.g. /xs and /xw) a number of X resources are used
+(see \fIxrd(1)\fP), e.g.
+.nf
+
+pgxwin.Win.geometry: WIDTHxHEIGHT+X+Y
+pgxwin.Win.iconGeometry: +X+Y
+
+.fi
+.SH FILES
+.nf
+.ta +2.5i
+NEMO/src/kernel/yapp	various yapp_* implementations
+.fi
+.SH AUTHOR
+Joshua E. Barnes, Peter Teuben
+.SH SEE ALSO
+catps(1NEMO), catpgps(1NEMO), yapp(3NEMO)
+.SH UPDATE HISTORY
+.nf
+.ta +1i +4i
+16-aug-88	document written - some are premature!	PJT
+16-nov-88	yapp_suntools added             	PJT
+26-oct-90	updated outdated documentation  	PJT
+11-nov-94	added yapp_meta 	PJT
+28-mar-04	added some useful PGPLOT info	PJT
+.fi

@@ -1,0 +1,76 @@
+.TH CCDDUMP 1NEMO "9 January 2012"
+.SH NAME
+ccddump \- dump contents of an image to other format
+.SH SYNOPSIS
+.PP
+\fBccddump in=\fPimage  \fBout=\fPdump [parameter = value ...]
+.SH DESCRIPTION
+\fBccddump\fP dumps the contents of an image file on a user selected
+format. A number of formats are available, and costumization is
+easy. The reverse operation, reading a binary image into NEMO's
+\fIimage(5NEMO)\fP format is mostly possible via
+\fIfitsccd(5NEMO)\fP with special options to provide a header.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIimage-file\fP
+input file name, in \fIimage(5NEMO)\fP format. 
+[no default].
+.TP
+\fBout=\fIdump-file\fP
+output file, will be in one of the selected dump formats (see below)
+[no default]
+.TP
+\fBtype=\fIoutput-type-string\fP
+Dump option type. 
+Currently available are \fBfloat\fP, \fBdouble\fP, and \fBbyte\fP.
+Such dumps are straight dumps in the local system format, with
+an option to byte swap (see swap= below).
+[default: \fBfloat\fP].
+.TP
+\fBrange=\fIlow:high\fP
+Range of input map used in output map. This option is only active
+when the output format is some fixed length integer type.
+When \fBoption\fP is left blank, the min and max value from
+the image header is used.
+[default: blank]
+.TP
+\fBmode=\fImode-string\fP
+Output mode, rows first or columns first. [default: row]
+.TP
+\fBswap=\fIbool\fP
+Swap the bytes? [default: \fBfalse\fP].
+.TP
+\fBscale=\fP
+Output scaling type in case fixed length integers are used. 
+.TP
+\fBgamma=\fP
+Gamma scaling factor for \fBscale=gamma\fP
+.TP
+\fBb=\fP
+Softening for \fBscale=asinh\fP
+.TP
+\fBsm=t|f\fP
+Use the CH sm file_type? . You will need the directive
+.nf
+   file_type       CH
+.fi
+in your ~/.sm file. [default: \fBfalse\fP].
+.SH "SEE ALSO"
+fitsccd(1NEMO), ccdfits(1NEMO), ccdprint(1NEMO), image(5NEMO), tsf(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+~/src/pjt/image  	ccddump.c ccddump.1
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+30-Jul-89	V1.0: Created	PJT
+28-mar-07	V1.2 sm output option	PJT
+9-jan-12	V1.3 3D option, scale= added	PJT
+10-jan-12	V2.0 option= -> type=		PJT
+.fi

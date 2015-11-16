@@ -1,0 +1,189 @@
+.TH CCDFITS 1NEMO "12 December 2013"
+.SH NAME
+ccdfits \- write a fits file to disk
+.SH SYNOPSIS
+.PP
+\fBccdfits in=\fPimage \fBout=\fPfits [parameter=value]
+.SH DESCRIPTION
+\fBccdfits\fP writes a fits file to disk. The input must be in 
+\fIimage(5NEMO)\fP format, the output will be in standard \fIfits(5NEMO)\fP
+format on disk.
+.PP
+An experimental version of this program that uses the standard
+\fIcfitsio(3)\fP library is known as \fIccdfitsio(1NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIimage-file\fP
+input file, in \fIimage(5NEMO)\fP format [no default].
+.TP
+\fBout=\fIfits-file\fP
+output file, will be in \fIfits(5NEMO)\fP format [no default].
+.TP
+\fBbitpix=\fInumber\fP
+Bitpix applied for scaling. Options are 16, 32 or -32. 
+[default: -32].
+.TP
+\fBscale=\fInumber\fP
+Scaling factors for CDELT keyword. If the second or third number is
+omitted, it is repeated from the previous number.
+[default: \fB1,1,1\fP].
+.TP
+\fBiscale=\fIbscale,bzero\fP
+Scaling factors for intensity (should only be used for BITPIX > 0)
+[default: \fB1,0\fP].
+.TP
+\fBobject=\fIname\fP
+Name of your object/image [default: none].
+.TP
+\fBcomment=\fIcomments\fP
+Comment using the COMMENT keyword. [default: none]
+.TP
+\fBcdmatrix=t|f\fP
+Use CD matrix instead of CDELT? [t/f]. Default: f.
+.TP
+\fBblocking=\fIfactor\fP
+Blocking factor (multiplicity of blocksize in terms of 2880 bytes) used
+when writing the fits file. [default: \fB1\fP].
+.TP
+\fPrefmap=\fP
+Reference map or cube (a fits file) from which the WCS is inherited. 
+It has to match the output cube which is created. \fIDeprecated\fP.
+By default none is used. 
+.TP
+\fIcrpix=\fP
+Use these pixels (2 or 3 need to be given, depending if a map or cube
+is output) as reference pixel, instead of the one defined in the
+reference map. By default not used.
+.TP
+\fIcrval=\fP
+Use these values (2 or 3 need to be given, depending if a map or cube
+is output) as value at the reference pixel, 
+instead of the one defined in the reference map or defined
+by the input. By default not used.
+.TP
+\fIcdelt=\fP
+Use these values (2 or 3 need to be given, depending if a map or cube
+is output) as pixel increments,
+instead of the one defined in the reference map or defined
+by the input. By default not used.
+.TP
+\fIradecvel=t|f\fP
+If no reference map used, this can be used to enforce a more reasonable
+axis descriptor (RA/DEC/VEL) for astronomical data packages which 
+cannot handle theory data too well (e.g. miriad, karma etc.).
+[Default: \fBf\fP].
+.TP
+\fIdummy=t|f\fP
+Write dummy (NAXISn=1) axes too?  If not, axes with length 1 are
+written last.
+Default: t
+.TP
+\fIndim=\fP
+If used, this will be the value of NAXIS written to the FITS file. Only
+useful of \fBdummy=f\fP and your FITS reader still cannot handle 
+dummy trailing axes.
+Default: not used.
+.TP
+\fInfill=0\fP
+Number of dummy comment lines to add to a fits header to test I/O routines.
+Default: 0
+.TP
+\fIndim=\fP
+If specified, testing if only that many dimensions need to be written.
+.TP
+\fIselect=1\fP
+Select this image (1 being the first) to grab in an file
+with multiple Image's. [Default: 1]
+.SH EXAMPLES
+To convert an image to unsigned 16 bit integers use the following math:
+.nf
+        a = "(a < 0 ? a+65536 : a)" 
+.fi
+or using \fIccdmath\fP:
+.nf
+        ccdmath in=map1 out=map2 fie="iflt(%1,0,%1+65536,%1)"
+.fi
+.PP
+A reference map (\fBrefmap=\fP) does not have to be a full FITS cube. If
+the NEMO \fIfitsio(3NEMO)\fP routines are used, the header will suffice,
+since the data is never needed. You can see \fIscanfits(1NEMO)\fP for this:
+.nf
+	scanfits in=cube.fits out=cube.fitshdr select=header
+	ccdfits ... refmap=cube.fitshdr ...
+.fi
+.SH FITS TAPES
+In the old days (somewhere before the 90s) there were actually
+software systems that could only directly read FITS files from
+tape, not from disk. The disk-fits file must be written to tape in 'raw'
+format with a block length of 2880 bytes, which can be done with
+\fIdd(1)\fP :
+.PP
+.nf
+.ta +1i
+	% \fBdd if=fits.dat of=/dev/rmt0 obs=2880\fP
+.fi
+.PP
+Under VMS the tape has to be mounted with the blocksize:
+.PP
+.nf
+.ta +1i
+	$ \fBMOUNT MT:/FOREIGN/BLOCK=2880/RECORD=2880\fP
+	$ \fBCOPY MT: FITS.DAT\fP
+.fi
+.PP
+and the file on disk must be recorded to have a 2880 blocksize:
+.PP
+.nf
+	$ \fBFIXATR/RFM=FIX:2880 FITS.DAT\fP
+.fi
+.PP
+In case FTP is used to transfer files, remember that FTP cannot handle
+files with this format (some FTP's at least). So it's best to have them
+in regular 512 byte blocks before moving, and at 2880 blocksize
+when using programs such as DISKFITS in the VMS version of GIPSY.
+.PP
+You could also try the following command procedure on VMS (Bob Hanisch, ST ScI):
+.nf
+ $!----------------------------------------------------------------------
+ $!   FIXFITS filename
+ $!   FIXFITS CONVERTs a file to the desired AIPSFITS disk format
+ $!----------------------------------------------------------------------
+ $ create/fdl=sys$input: temp.dat
+ RECORD
+       CARRIAGE_CONTROL        NONE
+       SIZE                    2880
+       FORMAT                  FIXED
+ $!                                      now convert - old fails some
+ $! convert/append 'P1' TEMP.DAT
+ $!                                      now convert - new method
+ $ copy 'P1' TEMP.DAT/overlay
+ $ rename temp.dat 'P1'
+ $!                                      clean up
+ $ purge 'P1'
+ $!
+.fi
+.SH "SEE ALSO"
+ccdfitsio(1NEMO), snapccd(1NEMO), ccdmath(1NEMO), iofits(1NEMO), image(5NEMO), fits(5NEMO), dd(1)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.0i
+~/src/pjt/image  	ccdfits.c ccdfits.1
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+29-apr-88	V1.0: created, calling WERONG fortran subroutines	PJT
+2-jun-88	V1.1: new filestruct, renamed wfits to ccdfits   	PJT
+1-oct-90	V2.1: new fitsio and keyword comment=, scale now 1	PJT
+11-oct-90	V2.2: added blocking= factor                     	PJT
+nov-92     	documented the FITFITS VMS procedure            	PJT
+dec-99     	some more documentation             	PJT
+apr-01		V3.0 reference map/pixel to inherit a WCS from  	PJT
+6-may-02	V4.0b properly implemented dummy= 	PJT
+4-jan-04	V5.2 docomented the recent changes to crval/cdelt/crpix=	PJT
+20-jun-09	V5.4 added select= to grab not the first image  	PJT
+.fi

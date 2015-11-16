@@ -1,0 +1,57 @@
+.TH TABCLIP 1NEMO "27 November 2002"
+.SH NAME
+tabclip \- clip a table
+.SH SYNOPSIS
+\fBtabclip\fP [parameter=value]
+.SH DESCRIPTION
+\fBtabclip\fP removes points from a table based on some "smoothness"
+criteria. Examples are when there is a jump larger than a
+critical amount it can be flagged. Or when the derivative exceeds
+a certain amount.
+.PP
+Fitting programs, such \fItabnllsqfit(1NEMO)\fP can also be used
+to remove points that are not close to a global model.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input file name (an ascii table) [???] 
+.TP
+\fBout=\fP
+Output table [???]     
+.TP
+\fBxcol=\fP
+x coordinate column [1]    
+.TP
+\fBycol=\fP
+y coordinate column [2]    
+.TP
+\fBderiv=\fP
+Clipping if abs(derivative) exceeds this value [] 
+.TP
+\fBeta=\fP
+Clipping if the value predicted from a 2nd order polynomial value exceeds
+the Y value by more than \fIeta\fP.
+Default: not used.
+.TP
+\fBlogic=and|or\fP
+When a left and right side criteria is applied, this determines
+the outcome of the clipping. \fBand\fP requires both to be satisfied,
+\fBor\fP requires only one. [Default: \fBand\fP].
+.TP
+\fBnmax=\fP
+Hardcoded allocation space, if needed for piped data.TP
+\fBcomment=t|f\fP
+Keep the clipped points as comments in the output file? By
+default they are left out.
+.SH SEE ALSO
+tabmath(1NEMO), tabnllsqfit(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+23-Nov-02	V0.1 Created	PJT
+27-nov-02	V0.3 added eta=	PJT
+.fi

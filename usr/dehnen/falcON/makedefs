@@ -1,0 +1,143 @@
+# -*- makefile -*-
+################################################################################
+#
+# makedefs for the falcON project
+#
+################################################################################
+
+# -----------------
+# Hardware platform
+# -----------------
+
+PLATFORM 	:= $(shell uname -m)
+
+# --------------------
+# maximum tensor order
+# --------------------
+
+KMAX		:= 6
+
+# -----------
+# directories
+# -----------
+
+INC		:= inc/
+IUTI		:= $(INC)utils/
+SRC		:= src/
+ACC		:= acc/
+MAN		:= manip/
+BIN		:= bin/
+LIB		:= lib/
+MODE		:= 755
+PUBLICMODE	:= 777
+BINT		:= $(BIN).dummy
+LIBT		:= $(LIB).dummy
+ACCT		:= $(ACC).dummy
+MANT		:= $(MAN).dummy
+BFCT		:= $(LIB)bodyfunc/.dummy
+
+$(BINT)		:
+		mkdir -p -m $(MODE) $(BIN)
+		touch $(BINT)
+$(LIBT)		:
+		mkdir -p -m $(MODE) $(LIB)
+		touch $(LIBT)
+$(BFCT)		: $(LIBT)
+		mkdir -p -m $(PUBLICMODE) $(LIB)bodyfunc
+		mkdir -p -m $(PUBLICMODE) $(LIB)bodiesfunc
+		touch $(BFCT)
+$(MANT)		:
+		mkdir -p -m $(MODE) $(MAN)
+		touch $(MANT)
+$(ACCT)		:
+		mkdir -p -m $(MODE) $(ACC)
+		touch $(ACCT)
+
+# ------------
+# NEMO library
+# ------------
+
+ifdef NEMO
+
+INEMO		:= -I$(NEMOINC) -I$(NEMOLIB)
+DNEMO		:= -DfalcON_NEMO
+LNEMO		:= -L$(NEMOLIB) -lnemo -ldl
+
+endif
+
+# -----------------------
+# compiler and linker etc
+# -----------------------
+
+
+# if no compiler set, use GNU compiler
+ifeq ($(COMPILER),)
+COMPILER := gcc
+endif
+
+# GNU compiler
+ifeq ($(COMPILER),gcc)
+LIMITED_WARNINGS	:= -Wextra -Winit-self 
+-include utils/make.gcc
+endif
+
+# Portland group compiler
+ifeq ($(COMPILER),pgi)
+-include utils/make.pgi
+endif
+
+# Pathscale compiler
+ifeq ($(COMPILER),pth)
+-include utils/make.pth
+endif
+
+# Sun compiler
+ifeq ($(COMPILER),sun)
+-include utils/make.sun
+endif
+
+# Intel compiler
+ifeq ($(COMPILER),icc)
+-include utils/make.icc
+endif
+
+# final compiler and linker flags
+FILEIO		:= -D_FILE_OFFSET_BITS=64
+NBDYFLAGS	:= $(DSPH) $(DPRECISION) $(DNEMO) $(DSSE) $(DSOFT) $(DWALTER)
+CFLAGS		:= $(FILEIO) $(CFLAGS) $(DPROPER) $(DEBUG)
+CXXFLAGS	:= $(FILEIO) $(CXXFLAGS) $(DPROPER) $(DEBUG)
+
+AR		:= ar rc
+RL		:= ranlib
+
+# ---------------
+# WDutils library
+# ---------------
+
+IUTIL		:= -I$(IUTI)
+LUTIL		:= -Lutils/lib -lWDutils
+
+# --------------
+# falcON library
+# --------------
+
+LFALCON		:= -L$(LIB) -l$(LIBNAME) $(LUTIL) $(LNEMO)
+
+falcON		:= $(links) $(LIB)lib$(LIBNAME).a $(LIB)lib$(LIBNAME).so
+
+# -------------------------
+# compile and link commands
+# -------------------------
+
+ifndef $(MATHLIB)
+MATHLIB		:= -lm
+endif
+
+MAKE_OBJ	= $(CXX) -c -o $@ $< -I$(INC) $(IUTIL) $(CXXFLAGS)
+MAKE_MANIP	= $(CXX) -o $@ $< -I$(INC) $(IUTIL) $(CXXFLAGS) $(NBDYFLAGS) -L$(LIB) -l$(LIBNAME) $(LUTIL) $(LNEMO) -shared
+MAKE_ACC	= $(CXX) -o $@ $< -I$(INC) $(IUTIL) $(INEMO) $(CXXFLAGS) -L$(LIB) -l$(LIBNAME) $(LUTIL) $(LNEMO) -shared
+MAKE_EXE	= $(CXX) -o $@ $< -I$(INC) $(IUTIL) $(CXXFLAGS)
+MAKE_EXE_C	= $(CC) -o $@ $< -I$(INC) $(IUTIL) $(CFLAGS)
+MAKE_EXE_F	= $(FC) -o $@ $< -I$(INC) $(IUTIL) $(OPTFLAGS)
+NEMO_EXE_FLGS	= $(NBDYFLAGS) $(LFALCON) $(MATHLIB)
+

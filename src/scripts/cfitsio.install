@@ -1,0 +1,51 @@
+#! /bin/csh -f
+#
+#  Install CFITSIO for NEMO
+#  See also:
+#       http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html
+#
+#
+#  17-apr-04    written, for 2490
+#  29-jul-04    checked for 2500
+#  12-aug-05    checked for 2510, commmetns on the new beta
+#  26-oct-06    for 3020
+#  11-aug-11    for 3280
+#  14-may-12    for 3300
+#  26-apr-13    the latest is now always available
+# 
+# TODO:   needs to add  -D_FILE_OFFSET_BITS=64   on e.g.linux if you want large file support
+
+if ($?NEMO == 0) set NEMO=`pwd`
+
+#			 	.. command line keywords ..
+set src=$NEMO/local/cfitsio 
+set prefix=$NEMO
+#set version=3310
+set version=_latest
+
+#				.. parse command line ..
+foreach arg ($*)
+   set check = `echo $argv[1] | awk -F= '{print NF}'`
+   if ("$check" == 1) break
+   echo Setting: $arg
+   set $arg
+end
+
+if (! -e $src) then
+  echo CFITSIO source directory src=$src does not exist, try NEMO=
+  echo or:
+  echo " cd $NEMO/local"
+  echo " wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$version.tar.gz"
+  echo " tar zxf cfitsio$version.tar.gz"
+  echo " ../src/scripts/cfitsio.install"
+  echo "Alternatively you can also try curl:"
+  echo " curl ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio$version.tar.gz | tar zxf -"
+  echo "CCfits:  http://heasarc.gsfc.nasa.gov/docs/software/fitsio/ccfits/CCfits-1.6.tar.gz"
+  exit 1
+endif
+
+cd $src
+./configure --prefix=$prefix
+make clean
+make
+make install 

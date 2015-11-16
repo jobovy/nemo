@@ -1,0 +1,186 @@
+.TH MKGALORBIT 1NEMO "20 April 2005"
+.SH NAME
+mkgalorbit \- Make a galactic orbit with from given initial conditions
+.SH SYNOPSIS
+\fBmkgalorbit\ out=\fPorbit-file [parameter=value]
+.SH DESCRIPTION
+Unlike \fImkorbit(1NEMO)\fP where an arbitrary orbit can be initialized,
+\fImkgalorbit(1NEMO)\fP is specifically intended to initialize orbits
+in a galactic potential w.r.t. an assumed solar motion (LSR). Input
+coordinates are galactic.
+.PP
+The sun is assumed to be along the negative X axis, i.e. at (-R0,0,0)
+and rotate clock wise, i.e. (0,V0,0). See comments below on this
+COORDINATE SYSTEM.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBout=\fP
+output filename (an orbit) [???]   
+.TP
+\fBlon=\fP
+Longitude (in degrees) []    
+.TP
+\fBlat=\fP
+Latitude (in degrees) []    
+.TP
+\fBdist=\fP
+Distance (in kpc). []
+.TP
+\fBpmlon=\fP
+Proper Motion in Longitude (mas/yr) []  
+.TP
+\fBpmlat=\fP
+Proper Motion in Latitude (mas/yr) []  
+.TP
+\fBvrad=\fP
+Radial velocity (in km/s) []
+.TP
+\fBR0=\fP
+LSR distance (in kpc) [8.0]   
+.TP
+\fBV0=\fP
+LSR clockwise velocity (in km/s) [220.0]   
+.TP
+\fBlsr=\fP
+Use LSR correction [f]
+.TP
+\fBsolar=u,v,w\fP
+U,V,W space velocities of the SUN w.r.t. LSR in a right-handed
+coordinate system. [Default:  10.00,5.25,7.17]
+.TP
+\fBcoordsys=\fP
+lon/lat coordinate system: equ=RA/DEC gal=GLON/GLAT [gal]  
+.TP
+\fBtime=\fP
+time [0.0]      
+.TP
+\fBpotname=\fP
+optional potential(5NEMO) []     
+.TP
+\fBpotpars=\fP
+... with optional parameters []   
+.TP
+\fBpotfile=\fP
+.. and optional datafile name []  
+.TP
+\fBheadline=\fP
+random verbiage []     
+.SH EXAMPLES
+Here's an orbit representing the LSR 
+.nf
+   % mkgalorbit orb1    0 0 0   0 0 0
+   ...
+   pos: -8.000000 0.000000 0.000000
+   vel: 0.000000 220.000000 0.000000
+.fi
+and solar motion
+.nf
+   % mkgalorbit orb2    0 0 0   0 0 0   lsr=t
+   ...
+   pos: -8.000000 0.000000 0.000000
+   vel: 9.000000 232.000000 7.000000 
+.fi
+and the benchmark case, the
+example from the gal_uvw IDL script:
+.nf
+   HD 6755 from the Hipparcos catalog:
+   RA=1h 9m 43.3s  DEC=61d 32m 49.5s  Distance=144 pc  mu_ra=627.89 mas/yr  mu_dec=77.84 mas/yr  VRAD=-321.4 km/s
+
+   % mkgalorbit . "(1+(9+42.3/60)/60)*15" "61+(32+49.5/60)/60" 0.144 627.89 77.84 -321.4 coordsys=equ lsr=t V0=0
+   ...
+   pos: -8.082794 0.117776 -0.003135
+   vel: -153.932343 -493.094568 97.359254
+
+	(V0=0 was set to get the local UVW's, to get the numbers from IDL below)
+
+   % idl
+   IDL> .run gal_uvw
+   IDL> ra = ten(1,9,42.3)*15.    & dec = ten(61,32,49.5)
+   IDL> pmra = 627.89  &  pmdec = 77.84 
+   IDL> dis = 144    &  vrad = -321.4
+   IDL> gal_uvw,u,v,w,ra=ra,dec=dec,pmra=pmra,pmdec=pmdec,vrad=vrad,dis=dis,/lsr
+   IDL> print,-u,v,w
+         -153.932     -493.095      97.3592
+ 
+
+
+.fi
+To use a particular galaxy model in an external potential, we first need to compute the phase space coordinates
+of the LSR in that model. \fIsnapgalview(1NEMO)\fP can help viewing a
+\fIsnapshot(5NEMO)\fP.
+.nf
+   % 
+.fi
+.SH COORDINATE SYSTEMS
+In galactic astronomy you will find papers that use a right handed or a
+left handed coordinate system for the UVW space velocities. It seems more natural to use the
+more common right-handed coordinate system (e.g. as argued by Johnson & Soderblom 1987), which
+we also adopt internally to the program (also UVW match our defintion of vx,vy-V0,vz).
+This is the system where U is positive for inwards radial motions, and  V points along
+the galactic rotation and W points towards the galactic north pole (and this oppostive
+that of the angular moment vector, which is mathematically negative).
+In order for (u,v,w) to be compatible with the (vx,vy,vz) we use in NEMO, the sun must
+be placed at (-R,0,0) and since the galaxy is rotating clock wise, with a velocity
+of (0,V,0). If you want something else, you can always use \fPsnaprotate(1NEMO)\fP
+.SH SOLAR MOTION
+Several systems of the peculiar solar motion have been practiced. 
+.PP
+20 km/s towards of ra,dec=18h,30d (18:03:50.27,30:00:16.8 in J2000), is the common
+convention since 1960, and is referred to as the kinematic LSR.
+.PP
+19.5 km/s towards 18:02:36,+29:56:41 (J2000), or l,b=56d,23d
+.PP
+15.4 km/s towards 17:55:36,+25:36:38 (J2000), or l,b=51d,23d
+.PP
+16.5 km/s towards 17:49:53,+28:00:02 (J2000), or l,b=53d,25d (canonical value)
+.PP
+18.0 km/s (11.1 +/- 0.74, 12.24 +/- 0.47, 7.25 +/-0.37)  - Shoenrich, Binney & Dehnen - 2010
+.PP
+.nf
+CASA::MeasTable.h
+Kinematic: 20.0 km/s towards B1900 RA/Dec direction of (270,30) degrees.
+Dynamical: (9,12,7) km/s in galactic coordinates, or 16.552945 towards l,b = 53.13, +25.02 deg.
+.fi
+.PP
+CASA supported coordinate systems:
+.nf
+REST -- Rest frequency
+LSRD -- Local Standard of Rest (J2000) -- as the dynamical definition (IAU, [9,12,7] km/s in galactic coordinates)
+LSRK -- LSR as a kinematical (radio) definition -- 20.0 km/s in direction ra,dec = [270,+30] deg (B1900.0)
+BARY -- Barycentric (J2000)
+GEO --- Geocentric
+TOPO -- Topocentric
+GALACTO -- Galacto centric (with rotation of 220 km/s in direction l,b = [90,0] deg.
+LGROUP -- Local group velocity -- 308km/s towards l,b = [105,-7] deg (F. Ghigo)
+CMB -- CMB velocity -- 369.5km/s towards l,b = [264.4, 48.4] deg (F. Ghigo)
+
+.fi
+.SH SEE ALSO
+mkorbit(1NEMO), potcode(1NEMO), snapgalview(1NEMO), snaprotate(1NEMO), potential(5NEMO)
+.PP
+.nf
+http://idlastro.gsfc.nasa.gov/ftp/pro/astro/gal_uvw.pro - used the opposite U definition
+Johnson & Soderblom (1987, AJ, 93,864)
+Mignard [2002, A&A, 354, 522]
+Olling & Dehnen [2003ApJ...599..275]
+Hipparcos catalog - introduction contains the J2000 transformation matrix (ra,dec) -> (glon,glat)
+http://lanl.arxiv.org/pdf/0902.3913  (Reid et al.)
+Kerr & Lynden-Bell 1986 MNRAS 221, 1023.
+http://jobovy.github.io/galpy/
+Reid et al. 2009 - http://adsabs.harvard.edu/abs/2009ApJ...700..137R
+.fi
+And an online example from NEMO's webpage:
+.nf
+http://carma.astro.umd.edu/nemo/examples/galactic-orbits.html
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+18-Apr-05	V0.1 Created	PJT
+20-apr-05	V0.6 got the math right 	PJT
+3-jun-05	V0.7a   uses modern Hipparchos for solar motion 	PJT
+.fi

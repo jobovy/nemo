@@ -1,0 +1,108 @@
+.TH CCDMOM 1NEMO "16 August 2013"
+.SH NAME
+ccdmom \- moment or accumulate along an axis of an image
+.SH SYNOPSIS
+\fBccdmom\fP [parameter=value]
+.SH DESCRIPTION
+\fBccdmom\fP takes special moments (in position, or image intensity)
+along an axis of an image/cube. 
+It can optionally also accumulate along the selected axis.
+.PP
+For datacubes that need to produce velocity fields a number of
+alternate options (gaussian fit, envelope tracing etc.) are available
+via \fIpvtrace(1NEMO)\fP.
+.PP
+To get the intensity weighted shape of an object using the moments
+of inertia, use \fIccdshape(1NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input image file. No default.
+.TP
+\fBout=\fP
+Output image file. No default.
+.TP
+\fBaxis=\fP
+Axis to take moment along (1=x 2=y 3=z)
+[Default: \fB3\fP]
+.TP
+\fBmom=\fP
+Moment to take [-5,-4,-3,-2,-1,0,1,2,3..]    
+Compute either the sum (0), mean (1), dispersion (2), or peak location (3). Negative
+numbers also have a special meaning. -1 computes the average intensity along the axis,
+where -2 computes the dispersion around the mean value. -4 computes the clumping factor
+per plane (only axis=3 supported now). -3 computes differentials along axis=3. 
+[Default: \fB0\fP].
+.TP
+\fBkeep=t|f\fP
+Boolean value if to keep the moment axis. If you keep the axis (instead
+of compressing it), the values are replaced with the computed moment.
+This can be useful if you want to subtract an cube/image with the
+mean value along a certain axis. Only in this case (but see also
+\fBcumulative=t\fP below) will the output image have the same
+shape and dimension as the input image.
+[Default: \fBf\fP].
+.TP
+\fBcumulative=t|f\fP
+Boolean value if the values should accumulate instead along the selected axis. 
+The \fBmom=\fP keyword is ignored, and the input and output datasets will
+now have the same shape and dimension. 
+[Default: \fBf\fP]
+.TP
+** \fBclip=\fP **
+Exclude pixels with values in the range -clip to clip. Default: 0
+.TP
+** \fBrngmsk=t|f\fP **
+Don't assign a 1st moment if the value results in a value outside the
+range of the axis. This can easily happen for noisy data. Default: false.
+.TP
+\fBpeak=N\fP
+For \fBmom=3\fP where it finds the peak, this allows you to find the N-th
+peak instead of the first. This is achieved by visiting each peak, and masking
+out all values downwards those peaks and then finding the next one.
+.TP
+\fBoper=\fP
+If supplied, this is an extra operator supplied to the input file and output file,
+to create the final output file. This is to prevent having to type two commands
+such as
+.nf
+    ccdmom map0 tmp0 axis=1 mom=-1 keep=t
+    ccdmath map0,tmp0 map1 %1-%2
+.fi
+instead of
+.nf
+    ccdmom map0 map1 axis=1 mom=-1 oper=-
+.fi
+.TP
+\fBintegrate=t|f\fP
+When using mom=0 the signal is summed along an axis, you can either just sum
+the numbers (this used to be the old default), or integrate, ie. multiply
+the sum by the cell-size along that axis. This is now the default, to make
+it more consistent with the new units in \fIsnapgrid(1NEMO)\fP.
+.SH SEE ALSO
+pvtrace(1NEMO), ccdsub(1NEMO), ccdrt(1NEMO), ccdshape(1NEMO), snapgrid(1NEMO), image(5NEMO)
+.SH CAVEATS
+Cannot compute straight moments, e.g. the 2nd moment along an axis, such
+as e.g. \fIsnapgrid\fP can do. This 
+program only computes user friendly numbers (sum, mean, dispersion)
+and gives special meaning to negative values of mom= and axis=.
+.SH FILES
+src/image/misc/ccdmom.c
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+09-jun-95	V0.1 Created	PJT
+19-oct-95	V0.2 simple implementation of axis=3	PJT
+12-dec-98	V0.3 finished mom=0,1,2 for all axes	PJT
+31-dec-98	V0.4 added keep=	PJT
+21-feb-01	V0.4a added mom=3, and fixed major bugs in computing moments	PJT
+25-mar-01	V0.5 added mom=-1	PJT
+18-oct-05	V0.6 added mom=-2 and cumulative option 	PJT
+16-sep-11	V0.8 added clip= and rngmsk= [lost code]	PJT
+27-nov-12	V1.0 added oper=	PJT
+14-feb-13	V2.0 integrate=t is now the new default for mom=0	PJT
+.fi

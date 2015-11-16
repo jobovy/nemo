@@ -1,0 +1,98 @@
+DIR = src/image/rotcur
+BIN = ccdvel rotcur rotcurshape rotcurtab velcube velfit
+NEED = $(BIN) nemoinp ccdmom
+
+DATA = map1.vel map1.den map1.rotcur map1.r map1.v map1.d map1.rotcurshape \
+	map00.vel map0.vel map0.diff cube1 cube1.den cube1.vel cube1.sig \
+        map2.vel
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -f $(DATA)
+
+R = 0:100:5
+PA = 30
+INC = 60
+SIG = 1
+
+NULL = /dev/null
+
+all:	$(BIN) 
+
+
+map0.vel:
+	$(EXEC) ccdmath out=map00.vel fie="rang(0,$(SIG))" size=128,128
+	$(EXEC) rotcurshape map00.vel 0,100 30 45 -50 blank=-999 resid=map0.vel \
+	  rotcur1=core1,200,10,0,0 fixed=all units=arcsec,1
+	$(EXEC) rotcurshape map0.vel 0,100 30+180 45 50 \
+	  rotcur1=core1,200,10,1,1 units=arcsec,1 nsigma=2 
+
+map1.vel:
+	@echo Creating $@
+	@nemoinp $(R) > map1.r
+	@nemoinp $(R) | $(EXEC) tabmath - - "100*%1/(20+%1)+rang(0,$(SIG))" all seed=123 > map1.v
+	$(EXEC) ccdvel map1.vel radii=@map1.r vrot=@map1.v pa=$(PA) inc=$(INC)
+
+map1.tab: map1.vel
+	ccdprint map1.vel x= y= newline=t label=x,y | awk '{if (NF==3 && $$3 != 0) print $$1-63.5,$$2-63.5,$$3}' > map1.tab
+
+
+map1.den:
+	@echo Creating $@
+	@nemoinp $(R) > map1.r
+	@nemoinp $(R) | $(EXEC) tabmath - - 'exp(-%1/20)' all > map1.d
+	$(EXEC) ccdvel map1.den radii=@map1.r vrot=@map1.d pa=$(PA) inc=$(INC) amp=t; nemo.coverage ccdvel.c
+
+
+velcube: map1.den map1.vel
+	@echo Running $@
+	$(EXEC) velcube cube1 map1.vel map1.den sigdefault=5
+	$(EXEC) ccdmom cube1 cube1.den 3 0; $(EXEC) ccdmath map1.den,cube1.den - %1-%2 | $(EXEC) ccdstat - bad=0
+	$(EXEC) ccdmom cube1 cube1.vel 3 1; $(EXEC) ccdmath map1.vel,cube1.vel - %1-%2 | $(EXEC) ccdstat - bad=0
+	$(EXEC) ccdmom cube1 cube1.sig 3 2; $(EXEC) ccdstat cube1.sig bad=0
+
+ccdvel:	map1.den
+	@echo Running $@
+
+.PHONY: rotcur
+
+rotcur: rotcur1 rotcur2
+
+rotcur1: map1.vel
+	@echo Running $@
+	$(EXEC) rotcur in=map1.vel radii=$(R) vrot=10,100 pa=$(PA) inc=$(INC) vsys=0 reuse=f \
+	   tab=map1.rotcur units=sec,1 > $(NULL) ; nemo.coverage rotcur.c
+	@tail -7 map1.rotcur
+
+rotcur2: map1.tab
+	@echo Running $@
+	$(EXEC) rotcur in=map1.tab radii=$(R) vrot=10,100 pa=$(PA) inc=$(INC) vsys=0 reuse=f imagemode=f \
+	   tab=map2.rotcur units=sec,1 > $(NULL) ; nemo.coverage rotcur.c
+	@tail -7 map2.rotcur
+
+rotcurshape: map1.vel
+	$(EXEC) rotcurshape in=map1.vel radii=0,60 pa=$(PA) inc=$(INC) vsys=0 \
+	   tab=map1.rotcurshape units=sec,1 rotcur1=core1,100,20,1,1 > $(NULL); nemo.coverage rotcurshape.c
+	@tail -11 map1.rotcurshape
+
+rotcurtab:
+	$(EXEC) rotcurtab radii=0:5 rotcur1=linear,1 rotcur2=core,1,2,3; nemo.coverage rotcurtab.c
+
+velfit:  map1.vel
+	$(EXEC) velfit in=map1.vel radii=$(R) pa=$(PA) inc=$(INC) out=map2.vel
+PA = 30
+INC = 60
+
+
+
+power: map1.vel
+	$(EXEC) rotcurshape in=map1.vel radii=0,60 pa=$(PA) inc=$(INC) vsys=0 \
+	   tab=map1.rotcurshape units=sec,1 rotcur1=power,100,20,1,1,1,1; nemo.coverage rotcurshape.c
+	@tail -11 map1.rotcurshape
+

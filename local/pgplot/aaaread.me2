@@ -1,0 +1,6 @@
+This is the BIMA/MIRIAD version of pgplot, and is nearly identical to
+the released for of 5.2.2 except for:
+
+- some support for MacOSX (darwin)
+- some support for intel compilers on linux
+- the fix_eps.pl script that fixes multi-page EPS files (for some printers)

@@ -1,0 +1,198 @@
+#! /bin/csh -f
+#
+#  this script will find Testfile's and create a testsuite from it
+#  Note that it will run in a directory $NEMO/tmp/test$$
+#
+#   22-mar-97   Orinally written                    Peter Teuben
+#   19-dec-99   -i added (doesn't seem to work?)
+#    6-apr-01   -f added
+#   20-jun-01   -b added
+#   17-jul-01   kludge hackforce, and rotcur
+#   15-feb-03   nemo.coverage 
+#   29-mar-04   documented -b; email now to teuben@astro.umd.edu
+#   24-dec-04   support to run with EXEC= for e.g. valgrind using -v
+#    6-aug-06   look for Testfile's in usr tree also (-u will disable)
+#
+#
+# BUG:  -b  does not remove executable, so you never know if new binary did
+#		not compile
+
+set testdir=$NEMO/tmp/test$$
+set log=testsuite.log
+alias test 'make -f Testfile'
+
+set norun=0
+set cleanup=0
+set clean=0
+set show=0
+set install=0
+set force=0
+set query=0
+set done=0
+set bootstrap=0
+set local=0
+set options=()
+set exec=()
+set usr=1
+foreach arg ($*)
+    switch ($arg)
+    case -b:
+              set bootstrap=1
+              breaksw
+    case -l:
+              set local=1
+              breaksw
+    case -n:  
+              if ($done) then
+                set options=($options $arg)                
+              else
+                set norun=1
+              endif
+              breaksw
+    case -r:  
+              set cleanup=1
+              breaksw
+    case -c:  
+              set clean=1
+              breaksw
+    case -v:
+    case -v0:
+	      set exec=(valgrind --tool=memcheck)
+	      breaksw
+    case -v1:
+	      set exec=(valgrind --tool=addcheck)
+	      breaksw
+    case -s:  
+              set show=1
+              breaksw
+    case -i:
+	      set install=1
+	      breaksw
+    case -f:
+	      set force=1
+	      breaksw
+    case -q:  
+              set query=1
+              breaksw
+    case -u:  
+              set usr=0
+              breaksw
+    case -h:  
+              goto help
+              breaksw
+    case --:
+              set done=1
+              breaksw
+    default:
+              set options=($options $arg)
+              breaksw
+    endsw
+end
+
+if ($bootstrap) then
+  set blog=/tmp/testsuite_b.log
+  echo Rebuilding testsuite executables, hang on.....see $blog 
+  (cd $NEMO/src/scripts; ./need -m `./testsuite -s`; mknemo -c history hisf; mknemo -n 1 rotcur; mknemo -n 1 hackforce) >& $blog
+endif
+
+mkdir $testdir
+pushd $testdir >& /dev/null
+
+set tdir=src
+if ($usr) set tdir=src,usr
+
+onintr cleanup
+
+#echo OPTIONS=$options
+#echo CNRS=$clean $norun $cleanup $show
+echo "TESTSUITE started `date`"                                        > $log
+echo "NEMO version $NEMOVER `hostname` ($NEMOHOST)"                   >> $log
+
+#   using $NEMO instead of $NEMO/src really makes it run slow on solaris
+
+foreach testfile (`find $NEMO/{$tdir} -name Testfile -print | sort`)
+    if ($norun) then
+        echo $testfile
+        continue
+    endif
+    if ($clean) then
+        (cd $testfile:h ; make -f Testfile clean)
+        continue
+    endif
+    if ($show) then
+        (cd $testfile:h ; make -f Testfile need)
+        continue
+    endif
+    if ($query) then
+        foreach bin (`cd $testfile:h ; make -f Testfile need`)
+            if (! -e $NEMOBIN/$bin) then
+                echo $NEMOBIN/$bin does not exist
+                if ($install) then
+                    mknemo $bin
+                endif
+	    else
+		if ($force) then
+                    mknemo $bin
+		endif
+            endif
+        end
+        continue
+    endif
+    echo -n TESTSUITE: $testfile:h
+    echo "==========================================================" >>  $log
+    if ($local) pushd $testfile:h >& /dev/null
+    make -f $testfile clean all  $options EXEC="$exec"                >>& $log
+    if ($status) then
+        echo " Problems"
+    else
+        echo " OK"
+    endif
+    if ($local) popd >& /dev/null
+end
+echo "TESTSUITE   ended `date`"                                       >> $log
+
+cleanup:
+
+    popd >& /dev/null
+
+    if ($show || $query) then
+        set clean=1
+    else
+        echo Results in $testdir/$log
+	echo If you have any unsolved problems, this file should be sent to the teuben@astro.umd.edu
+        head -1 $testdir/$log
+        tail -1 $testdir/$log
+    endif
+
+    if ($cleanup || $clean) then
+        rm -rf $testdir
+    endif
+
+
+    exit 0
+
+help:
+    echo "Usage: $0 [options] [KEYWORD=value ...]"
+    echo ""
+    echo "This program excerizes NEMO by running a number of core programs"
+    echo "from a diverse set of packages (kernel,nbody,orbit,image)"
+    echo ""
+    echo "Options:"
+    echo "    -b    bootstrap: force rebuilding binaries"
+    echo "    -l    run test in local (where Testfile is) directory"
+    echo "    -n    dry-run, only show which directories have Testfile's"
+    echo "    -r    cleanup working directory in '$NEMO/tmp' afterwards"
+    echo "    -c    clean the NEMO directory itself of Testfile in/out files"
+    echo "    -s    show all the binaries that are needed for each test"
+    echo "    -i    install the missing binaries that are needed for all tests"
+    echo "    -f    forced install of the binaries needed for all tests"
+    echo "    -b    bootstrap mode"
+    echo "    -q    show all binaries that have not been installed yet"
+    echo "    -v    run programs through valgrind --tool=memcheck"
+    echo "    -h    this help"
+    echo ""
+    echo "Useful keywords, and their defaults:"
+    echo "(see also Testfile.def)"
+    echo "    NBODY=10         should at least be 10; 10 makes it run fast"
+    echo 
+

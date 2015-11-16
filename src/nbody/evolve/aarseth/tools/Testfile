@@ -1,0 +1,80 @@
+DIR = src/nbody/evolve/aarseth/tools
+BIN = nbody1 u3tos runbody4
+NEED = $(BIN) mkplummer snaptrim snapcmp runbody1 nbody1 stou4 u3tos
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -fr run1 run1.log  run2 run2.log run2a run2b run2c run4a run4b run4c
+
+NBODY = 10
+
+all: $(BIN)
+
+
+INTEST = $(NEMO)/$(DIR)/../nbody1/test/intest
+CMPLOG = $(NEMO)/$(DIR)/../nbody1/test/testrun
+
+#	this also tests stou4, as it's called in runbody1
+#	then compares the two input models, one via stou4->u3tos
+#	the other straight from nemo
+
+u3tos:
+	@mkplummer - $(NBODY) seed=123 |\
+	  runbody1 - run2 $(NBODY) kz=1,2,1,2,0,0,0,0,0,1,1 > run2.log
+	@u3tos run2/OUT3 run2/out3.dat; nemo.coverage u3tos.c
+	@mkplummer run2/test1 $(NBODY) seed=123
+	@snaptrim run2/out3.dat run2/test2 times=0
+	@snapcmp run2/test1 run2/test2
+
+#	this only tests nbody1, no data conversion routines
+
+nbody1:
+	@echo Running runbody1 testrun for NBODY1
+	@runbody1 "" run1 \
+		`awk '{if(NR==2)print $$0}'  $(INTEST)` \
+		`awk '{if(NR==3)print $$0}'  $(INTEST)` \
+	       "`awk '{if(NR==4)print $$0}'  $(INTEST)`" \
+		`awk '{if(NR==5)print $$0}'  $(INTEST)` \
+		`awk '{if(NR==6)print $$0}'  $(INTEST)`	> run1.log
+
+nbody1_cmp:
+	@echo Comparing with standard version:
+	@-diff run1.log $(CMPLOG)
+	@echo Comparison done
+
+nbody2:
+	@echo OOPS: Running runbody2 testrun for NBODY2 not implemented yet
+
+runbody1:
+	runbody1                     outdir=run2a nbody=25 tcrit=0 kz=0,0,1,1 > run2a.log
+	u3tos    in=run2a/OUT3       out=run2a/input.snap
+	runbody1                     outdir=run2b nbody=25 tcrit=10 kz=0,0,1,1 deltat=1 > run2b.log
+	runbody1 in=run2a/input.snap outdir=run2c nbody=25 tcrit=10 kz=0,0,1,1 deltat=1 > run2c.log
+	u3tos    in=run2b/OUT3 out=run2b/out.snap
+	u3tos    in=run2c/OUT3 out=run2c/out.snap
+	snapcmp run2b/out.snap  run2c/out.snap
+
+runbody2:
+	runbody2                     outdir=run2a nbody=25 tcrit=0 kz=0,0,1,1 > run2a.log
+	u3tos    in=run2a/OUT3       out=run2a/input.snap
+	runbody2                     outdir=run2b nbody=25 tcrit=10 kz=0,0,1,1 deltat=1 > run2b.log
+	runbody2 in=run2a/input.snap outdir=run2c nbody=25 tcrit=10 kz=0,0,1,1 deltat=1 > run2c.log
+	u3tos    in=run2b/OUT3 out=run2b/out.snap
+	u3tos    in=run2c/OUT3 out=run2c/out.snap
+	snapcmp run2b/out.snap  run2c/out.snap
+
+
+runbody4:
+	runbody4                     outdir=run4a nbody=25 tcrit=0 KZ5=0 KZ22=1 > run4a.log
+	u3tos    in=run4a/OUT3       out=run4a/input.snap  mode=4
+	runbody4                     outdir=run4b nbody=25 tcrit=10 KZ5=0 KZ22=1 deltat=1 > run4b.log
+	runbody4 in=run4a/input.snap outdir=run4c          tcrit=10              deltat=1 > run4c.log
+	u3tos    in=run4b/OUT3 out=run4b/out.snap mode=4
+	u3tos    in=run4c/OUT3 out=run4c/out.snap mode=4
+	snapcmp run4b/out.snap  run4c/out.snap

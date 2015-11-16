@@ -1,0 +1,117 @@
+.TH SNAPSHOT 5NEMO "10 February 2004"
+.SH NAME
+snapshot \- format for N-body snapshot files
+.SH SYNOPSIS
+.nf
+.B#include <snapshot/snapshot.h>
+.fi
+.SH DESCRIPTION
+\fIsnapshot\fP  is the format used to store N-body particle data.
+The format is that of the general binary
+structured fileformat as described in \fIfilestruct(3NEMO)\fP.
+.PP
+.SH TAGS and BITS
+.nf
+.ta +1.0i +1.5i +1.5i
+\fITagname          	current ASCII	Bit?\fP
+
+SnapShotTag      	"SnapShot"	-
+
+ParametersTag    	"Parameters"	-
+NobjTag           	"Nobj"       	-
+TimeTag             	"Time"    	TimeBit
+
+ParticlesTag     	"Particles"  	-
+CoordSystemTag      	"CoordSystem"	-
+MassTag          	"Mass"      	MassBit
+PhaseSpaceTag      	"PhaseSpace"	PhaseSpaceBit
+PositionTag      	"Position"	PositionBit (see ZENO below)
+VelocityTag      	"Velocity"	VelocityBit (see ZENO below)
+AccelerationTag  	"Acceleration"	AccelerationBit
+PotentialTag    	"Potential"	PotentialBit
+AuxTag            	"Aux"       	AuxBit
+KeyTag              	"Key"      	KeyBit
+DensityTag		"Density"
+GasDensTag		"GasDensity"
+EpsTag			"Eps"
+StoryTag		"Story"
+NumberTag		"NPartners"
+SPHNumberTag		"NSPHPartners"
+
+
+DiagnosticsTag  	"Diagnostics"	-
+EnergyTag           	"Energy"       	EnergyBit
+KETensorTag        	"KETensor"	KETensorBit
+PETensorTag      	"PETensor"  	PETensorBit
+AMTensorTag      	"AMTensor"     	AMTensorBit
+CMPhaseSpaceTag  	"CMPhaseSpace"	CMPhaseSpaceBit
+.fi
+.SH COORDINATE SYSTEMS
+Coordinate system codes; these assume 32-bit ints.
+.nf
+#define CSCode(type,ndim,nder) ((type) | (ndim) << 8 | (nder))
+
+#define CSType(code) ( (code) & (0377 << 16))
+#define CSNdim(code) (((code) >> 8) & 0377)
+#define CSNder(code) ( (code) & 0377)
+
+#define Cartesian   (1 << 16)
+#define Spherical   (2 << 16)
+#define Scattering  (3 << 16)
+
+#define TrueAnomaly (4 << 16)
+#define EccAnomaly  (5 << 16)
+#define MeanAnomaly (6 << 16)
+#define PeriPassage (7 << 16)
+.fi
+.PP
+The coordinate system flag, usually visible as an octal
+number via \fItsf(1NEMO)\fP, consists of three parts: \fBnder\fP 
+refers to the number of derived quantities (2 if position and
+velocities are given, 3 of the jerk is also given, 1 if only
+position is given), \fBndim\fP, the dimensionality of the coordinate
+system (typically 1, 2 or 3, but higher values should not be
+illegal if the code handles it), and \tBtype\fP, which is an
+enumerated number that signifies the coordinate type
+(from \fI<snapshot/snapshot.h>\fP: \fICartesian, Spherical, \fP etc.)
+.SH CONVERSIONS
+In newer versions of NEMO you may find a SnapShot format with a split
+\fIPosition\fP and \fIVelocity\fP, instead of the classic combined 
+\fIPhaseSpace\fP. In such case, most conversion programs stubbornly
+convert the datastream to the classic \fIPhaseSpace\fP format. E.g.
+\fYgyrfalcON(1NEMO)\fP produces output data in the new format.
+.nf
+    mkplummer p100 100
+    gyrfalcON p100 p100.out
+    snapscale p100.out - | stoa - p100.atos
+.fi
+.SH "SEE ALSO"
+atosph(1NEMO), filestruct(5NEMO)
+.PP
+.nf
+Large Particles, e.g. Stern et al. MNRAS, 272, 291 (1995)
+.fi
+.SH SPH Particles
+Smooth Particle Hydro (SPH) particles store a few addition attributes
+per particle. 
+
+.SH ZENO DATA
+\fIZENO\fP programs write a new flavor of SnapShot files,
+in which the \fIPhaseSpace\fP array has been split into a
+\fIPosition\fP and \fIVelocity\fP array. NEMO's\fIget_snap\fP macros 
+understand this flavor, but will - for now - convert the data back
+into the less flexible type with combined \fIPhaseSpace\fP coordinates.
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+~/inc/snapshot/  	snapshot.h body.h get_snap.h put_snap.h
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +2.0i +2.0i
+26-aug-93	written at long last	PJT
+2-jan-03	documented the split Pos/Vel (ZENO) type snapshot flavor	PJT
+10-feb-04	documented SPH properties	PJT
+.fi

@@ -1,0 +1,124 @@
+.TH CCDMATH 1NEMO "25 August 2004" 
+.SH NAME
+ccdmath \- map arithmetic using function expressions
+.SH SYNOPSIS
+.PP
+\fBccdmath in=\fP[image1[,image2,...]]  \fBout=\fPimage \fBfie=\fPexpression  
+.SH DESCRIPTION
+\fBccdmath\fP combines maps through some simple operations to make a new map.
+It also handles a few arithmetic functions, such as sqrt, exp, log10. See
+\fIfie(3NEMO)\fP for a full definition of the available functions and
+operations. Input maps are referred to by \fB%n\fP, where \fBn\fP
+is the ordinal number of the input maps (1 being the first one), 
+in the function expression \fBfie\fP.
+.PP
+The program can also be used in creation mode: when no input files are
+given, parameters \fB%x\fP, \fB%y\fP and \fB%z\fP in \fBfie=\fP 
+can be used to refer to the X, 
+Y and Z pixel coordinates in the map to be created, (0,0,0) 
+in pixel coordinates w.r.t. reference pixel.
+\fB%w\fP and \fB%r\fP can be used for 2D and 3D radius w.r.t. reference pixel, again
+in pixel coordinates.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIin-file(s)\fP
+list of input file name(s), each in \fIimage(5NEMO)\fP format.
+In case of multiple files, the list must be space or comma separated.
+If no files are given, the program is in creation mode.
+.TP
+\fBout=\fIout-file\fP
+output file, will be in \fIImage(5NEMO)\fP format [no default]
+.TP
+\fBfie=\fIexpression\fP
+Expression how to manipulate the input maps or
+create output map. Input maps are referred to by \fB%n\fP or \fB$n\fP,
+in creation mode position is referred to by \fB%x\fP and \fB%y\fP
+[no default].
+.TP
+\fBsize=\fInx,ny,nz\fP
+Size of the output map in case program is in creation mode [default: 10,10,1].
+.TP
+\fBcrpix=\fIr1,r2,r3\fP
+(New) values for the reference pixel. Note these are in FITS notation,
+i.e. (1,1,1) is the lower left of the first plane in a cube. Recall
+that (nx+1)/2 is the central pixel in coordinate X, not nx/2!
+By default the WCS is transferred from the first input image to the output
+image, however, by using all 3 keywords 
+\fBcrpix=,crval=,cdelt=\fP the WCS of the output image can be overwritten.
+[Default: \fB1,1,1\fP for image creation].
+.TP
+\fBcrval=\fIr1,r2,r3\fP
+(New) values for the reference pixel.
+[Default: \fB0,0,0\fP for image creation].
+.TP
+\fBcdelt=\fIr1,r2,r3\fP
+(New) values for the pixel separation. 
+[Default: \fI1,1,1\fP for image creation].
+.TP
+\fBseed=\fP\fIinteger\fP
+seed for the random number generator (default: a value 0, which will
+be converted into a unique new value using UNIX's clock time, in
+seconds since once-upon-a-time-in-the-seventies).
+.SH EXAMPLE
+Create a 'difference' map from two input maps:
+.nf
+   % \fBccdmath inmap1,inmap2 outmap "abs(%1-%2)"\fP
+.fi
+create the maximum of two maps:
+.nf
+   % \fBccdmath inmap1,inmap2 outmap "ifgt(%1,%2,%1,%2)"\fP
+.fi
+create the difference of two maps if either of the two is not zero:
+.nf
+   % \fBccdmath inmap1,inmap2 outmap "ifne(%1,0,%1-%2,ifne(%2,0,%1-%2,0))"\fP
+.fi
+create a map from scratch:
+.nf
+  % \fBccdmath out=newmap fie="exp(-((%x-50)/25)**2-((%y-50)/25)**2)" size=100,100\fP
+.fi
+create a (2 plane 4x3 image) cube from scratch:
+.nf
+  % \fBccdmath "" cube432 "%x+10*%y+100*%z" 4,3,2\fP
+.fi
+create a new WCS for an existing cube, with reference value (0,0,0) in the center of the cube,
+assuming you know the size of the cube (nx,ny,nz) and pixel sizes (dx,dy,dz):
+.nf
+  % \fBccdmath cube0 cube1 %1 crpix=$nx/2+0.5,$ny/2+0.5,$nz/2+0.5 crval=0,0,0 cdelt=$dx,$dy,$dz\fP
+.fi
+and creating an annulus:
+.nf
+  %  \fBccdmath "" map0 "ifgt(%w,20,1,iflt(%w,10,1,0))" size=512 crpix=256,256\fP
+.fi
+.SH TIMING
+Performance on Rigel (SUN 3/160, 16Mhz):
+.nf
+.ta +1i +2i +2i
+100 * 100	rang: 5.8"	+: 3.4"  	sqrt: 2.6"
+200 * 200	rang: 23.2	+: 13.0"	sqrt: 8.7"
+300 * 300	rang: 51.8"	+: 31.3"	sqrt: 23.8"
+512 * 512	rang: 152.7"	+: 88.4"	sqrt: 64.2"
+.fi
+.SH "SEE ALSO"
+fie(3NEMO), image(5NEMO), tsf(1NEMO), ccdgen(1NEMO), ccdsky(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+src/image/trans  	ccdmath.c ccdmath.1
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+ 1-Jul-87	V1.0: Created	PJT
+ 6-jul-87	V1.1: order keywords changed for future enhancements	PJT
+ 1-jun-88	V2.0: new filestruct, although code is same         	PJT
+18-dec-88	V2.1: new keyword structure, fie() used.         	PJT
+22-jan-89	V2.3: can make map from scratch using %x, %y and %z	PJT
+1-mar-03	V3.0: set/change the WCS				PJT
+19-jun-03	V3.1: allow %w and %r, and use offset from crpix	PJT
+25-aug-04	V3.2: fixed error in setting crpix (off by 2!)		PJT
+.fi
+

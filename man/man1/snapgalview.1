@@ -1,0 +1,87 @@
+.TH SNAPGALVIEW 1NEMO "17 February 2003"
+.SH NAME
+snapgalview \- coordinate transformations for galactic viewing
+.SH SYNOPSIS
+\fBsnapgalview\fP [parameter=value]
+.SH DESCRIPTION
+\fBsnapgalview\fP transforms a snapshot for internal viewing as
+if it was our galaxy. For this the "LSR" needs to be defined,
+either by giving a phase space coordinate (via \fBpos=\fP
+and \fBvel=\fP) or by referring to a specific particle in
+the snapshot (see \fBcenter=\fP).
+.PP
+The snapshot is then recentered in phase space as to be at rest
+w.r.t. that LSR point, and oriented such that the "galactic center"
+(defined as 0,0,0 in the input snapshot)
+would be seen towards the positive X-axis (glat=glon=0).
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input snapshot filename, in standard snapshot format. 
+No default.
+.TP 20
+\fBout=\fP
+Output snapshot filename.
+No default.
+.TP 20
+\fBpos=\fP
+Position vector of the LSR. By default not used.
+.TP 20
+\fBvel=\fP
+Velocity vector of the LSR.
+By default not used.
+.TP 20
+\fBcenter=\fP
+Star # to represent LSR (0=first). By default not used.
+.TP 20
+\fBtimes=\fP
+Times to select snapshots from [all]  
+.SH BUGS
+The galactic plane is fixed at z=0, therefore selecting an LSR with Z or VZ not
+zero can give strange results. Use programs like \fIsnaprect(1NEMO)\fP
+to re-orient your disk in the Z=0 plane.
+.SH EXAMPLES
+Here is something close enough to our galactic disk, and after transforming
+to a particle (half way out to the edge of 20 kpc),
+of a galactic GLON-VRAD diagram. Notice the proper way of viewing
+angular sky coordinates from right to left:
+.nf
+    % mkdisk out=disk1 nbody=100000 potname=halo potpars=0,200,1 rmin=0 rmax=20 mass=1 sign=-1
+    % set i=25000
+    % snapgalview disk1 - center=$i | snapplot - xvar=glon yvar=vr xrange=180:-180 yrange=-200:200 
+      LSR(25000):  Pos:9.54165 -2.99296 0  |10.0001|    Vel: -59.5619 -189.885 0 |199.007|
+.fi
+.PP
+Useful bodytrans functions that have been predefined are:
+.nf
+.ta +1i
+glon	Galactic Longitude (-180..180)
+glat	Galactic Latitude (-90..90)
+mul	Proper motion in longitude (sans the 4.74 factor)
+mub	Proper motion in latitude (sans the 4.74 factor)
+
+.fi
+which come from the following formulae (the galactic center pointing along the
+positive X axis, galactic rotation is positive, i.e. clock wise and thus
+along the positive Y axis:
+.ta +1.5i
+.nf
+	x = r cos(l) cos(b)
+	y = r sin(l) cos(b)
+	z = r sin(l)
+and
+	r mu_l = -vx sin(l)        + vy cos(l)
+	r mu_b = -vx cos(l) sin(b) - vy sin(l) sin(b) + vz cos(b)
+.fi
+.SH SEE ALSO
+snaptrans(1NEMO), snapshift(1NEMO), snaprotate(1NEMO), mkgalorbit(1NEMO)
+.SH FILES
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+17-Feb-03	V1.0 Created	PJT
+.fi

@@ -1,0 +1,48 @@
+.TH CCDMEDIAN 1NEMO "12 June 2013"
+.SH NAME
+ccdmedian \- median or mean filter of an image
+.SH SYNOPSIS
+\fBccdmedian\fP [parameter=value]
+.SH DESCRIPTION
+Median filter of an image. For some cases, \fIccdflatten(1NEMO)\fP
+will be a faster method, since a median filter needs to sort
+all particles in the search area and can become slow.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input image file [???]    
+.TP
+\fBout=\fP
+Output image file [???]    
+.TP
+\fBn=\fP
+(odd) size of filter [5]   
+.TP
+\fBx=\fP
+Optional subselection of the X range (min,max) []
+.TP
+\fBy=\fP
+Optional subselection of the Y range (min,max) []
+.TP
+\fBnstep=\fP
+Cheat mode: replicate each nstep pixels [1] 
+.TP
+\fBfraction=\fP
+Fraction of positive image values in subtract mode
+.TP
+\fBmode=\fP
+Mode: median, average, subtract [median]    
+\fBtorben=t|f\fP
+Use the Torben method for median filter. [f]
+.SH SEE ALSO
+ccdsharp(1NEMO), ccdsmooth(1NEMO), ccdflatten(1NEMO), image(5NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+12-Feb-05	V0.0 Created	PJT
+12-Jun-2013	V0.8 mean option for speed	PJT
+.fi

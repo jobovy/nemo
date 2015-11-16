@@ -1,0 +1,162 @@
+.TH SNAPIFU 1NEMO "9 April 2009"
+.SH NAME
+snapifu \- take spectra from a snapshot at a set of specified grid points
+.SH SYNOPSIS
+.PP
+\fBsnapifu in=\fPsnapshot \fBout=\fPimage [parameter=value]
+.SH DESCRIPTION
+\fIsnapifu\fP computes spectra, or reduces this to moments,
+in a number of predefined gridpoints, very simular to \fIsnapgrid(1NEMO)\fP.
+The model behind this is Integral Field Units such as DensePak, SparsePak
+and Sauron.
+.PP
+The output image is written in standard \fIimage(5NEMO)\fP format, 
+where the X coordinates enumerates the grid points, the Y axis is dummy,
+and the Z axis the spectrum.
+.SH PARAMETERS
+The following parameters are recognized:
+.TP 20
+\fBin=\fIin-file\fP
+input file, must be in \fIsnapshot(5NEMO)\fP format. Multiple snapshots can
+be stacked uses the \fBtimes=\fP keyword: see \fBstack=\fP below.  [no default].
+.TP
+\fBout=\fIout-file\fP
+output file, will be in \fIimage(5NEMO)\fP format [no default].
+.TP
+\fBtimes=\fP\fIt1:t2,t3,..\fP
+Selection of the times of snapshots to be selected for gridding.
+For \fBstack=t\fP all snapshots will be co-added into one image,
+however selecting \fBstack=f\fP or selecting multiple \fBevar\fP's
+one can request multiple output images.
+[Default: \fBall\fP].
+.TP
+\fBxgrid=\fP\fIx-positions\fP
+A set of X (see \fBxvar=\fP) positions where spectra are taken. Use
+\fItabcols(1NEMO)\fP if the grid points are hidden in a columns in a table.
+ Default: 0.
+.TP
+\fBygrid=\fP\fIy-positions\fP
+A set of Y (see \fByvar=\fP) positions where spectra are taken. Default: 0.
+.TP
+\fBsize=\fP
+Size of the grid point. The shape of the point is circular, and the size
+is the diameter of this point. For square/recangular shapes, use
+\fIsnapgrid(1NEMO)\fP.
+.TP
+\fBxvar=\fP\fIx-expression\fP
+The value of \fIx-expression\fP is gridded along the X axis.
+[default: \fBx\fP].
+.TP
+\fByvar=\fP\fIy-expression\fP
+The value of \fIy-expression\fP is gridded along the Y axis.
+[default: \fBy\fP].
+.TP
+\fBzvar=\fP\fIz-expression\fP
+The value of \fIz-expression\fP is gridded along the Z axis (\fBnz\fP>1), 
+or moments taken off (\fBnz=1\fP). [default: \fB-vz\fP].
+.TP
+\fBevar=\fIemissivity\fP
+Variable to denote emissivity per particle. You can select more than 1
+expression, in which case different images will be written out
+(only in \fBstack=f\fP mode)
+[default: \fBm\fP].
+.TP
+\fBtvar=\fItau\fP
+Variable to denote the optical depth of a particle. [Default: 0]
+.TP
+\fBdvar=\fIdepth\fP
+Variable to denote the line of sight. [Default: z]
+.TP
+\fBzrange=\fIxb:xe\fP
+Range in \fBzvar\fP to bin, or take moments of
+[default: \fB-infinity:infinity\fP].
+.TP
+\fBnz=\fIz-pixels\fP
+Number of pixels along the Z axis of the cube. If one pixel is choosen,
+moments can be taken (see below), else a simple gridding is used.
+[default: \fB1\fP].
+.TP
+\fBmoment=\fInumber\fP
+Order of the Z-gridding.
+Most commonly choosen are: \fB0\fP (total intensity), \fB1\fP 
+(velocity zvar weighted intensity) and \fB2\fP (velocity square weighted intensity),
+where 'intensity' should really be read as surface density per 
+square unit length. Special values of \fB-1\fP and \fB-2\fP can be
+used to directly compute the mean and the dispersion from the mean.
+[default: \fB0\fP].
+.TP
+\fBmean=t|f\fP
+Should the \fIemission\fP in a cell be averaged?
+This also controls the units of the gridding. For \fBmean=f\fP (the default) a
+\fIsurface-density\fP is computed (emission per area),
+ whereas for \fBmean=t\fP the average per
+pixel is computed of the units of emission.
+[Default: \fBf\fP].
+.TP
+\fBstack=t|f\fP
+Should all snapshots from the input file be stacked, or write one
+image per selected (see \fBtimes=\fP) time? [default: \fBf\fP].
+.SH UNITS
+Units are maintained in the same way as in snapshots, they don't have
+a specific name, but carry their normal meaning 'length', 'velocity'
+and 'mass'. Since \fIsnapifu\fP calculates (surface/space) densities,
+its units are formally 'mass' per square 'length' times 'velocity'
+to the power \fBmoment\fP. Notice the \fBmean=\fP keyword,
+which prevents division by the (fiber) cellsize.
+.PP
+When channel maps are produced (\fBmoment=0\fP), 
+the data are not normalized w.r.t. the
+convolving velocity beam. For a rectangular beam (\fBvrange=vmin:vmax\fP)
+the data should formally be divided by \fB(vmax-vmin)\fP, for a 
+gaussian beam (\fBvrange=vmean,vsig\fP) by \fBvsig*sqrt(2*pi)\fP.
+Also remember that a gaussian beam has \fBFWHM = 2.355*sigma\fP.
+.SH BUGS
+Combinations of large snapshots and large images may run into memory
+problems since both the snapshot and the image(s) must fit into memory
+to obtain turbo speeds. Use non-negative \fBmoment\fPs to avoid
+having to allocate one or two extra images in addition to the
+snapshot and the image. 
+.SH "EXAMPLES"
+If the grid points are hidden in the columns of an ASCII table, the \fItabcols(1NEMO)\fP
+can be used to extract them directly into the xgrid= and ygrid= keyword, albeit perhaps
+somewhat ugly looking. Here is an example of taking a spectrum around each star in a 
+10-body Plummer sphere,
+.nf
+   mkplummer p10 10 seed=123
+   snapprint p10 x,y > p10.tab
+   set x=(`tabcols p10.tab 1`)
+   set y=(`tabcols p10.tab 2`)
+   snapifu p10 p10.ccd xgrid="$x" ygrid="$y"
+.fi
+.PP
+Currently the spectra are written to a CCD image where the 2nd axis is a dummy axis.
+There are least two ways to view these data. With \fIccdfits(1NEMO)\fP you can write
+a \fIfits(5NEMO)\fP file and ignore the dummy axis, and then display it in your favorite
+display program
+.nf
+  snapifu p10 p10.ccd xgrid="$x" ygrid="$y" zrange=-2:2 nz=32
+  ccdfits p10.ccd p10.fits dummy=f
+  nds9 p10.fits
+.fi
+or use \fIccdsub(1NEMO)\fP to reduce this axis for data that want a 2D image in the first
+two dimensions:
+.nf
+  ccdsub p10.ccd p10a.ccd dummy=f
+  ccdplot p10a.ccd
+  ccdprint p10a.ccd x= y=
+.fi
+.SH "SEE ALSO"
+snapgrid(1NEMO), 
+snaprotate(1NEMO), snapslit(1NEMO), snapccd(1NEMO), ccdsub(1NEMO), ccdprint(1NEMO), image(5NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+src/nbody/image  	snapifu.c
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+8-apr-09	V1.0: Created	PJT
+.fi

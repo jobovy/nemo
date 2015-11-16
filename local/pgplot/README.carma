@@ -1,0 +1,45 @@
+This version of PGPLOT has a number of small patches we needed for
+MIRIAD (a BIMA product, now run as CARMA) and WIP. Eventually
+these patches will be included in the official Caltech product.
+Until then, feel free to use this version, but be aware there is
+no official support for them.
+
+Also note there is a cloned version of PGPLOT available within Starlink,
+the ATNF/MIRIAD may also keep some subtle differences in their RCS
+tree.
+
+We keep this version of PGPLOT under CVS.
+
+- Peter Teuben
+
+
+The following changes were made:
+-------------------------------
+
+- a number of un-documented patches (to be documented as I sift
+  through the CVS logs)
+
+- various sys_*/ versions and changes to compilers
+  for:
+      linux intel compiler
+      mac/darwin
+
+- a simple pgplot.install script is available within the
+  WIP (master version in NEMO/src/scripts) distribution
+
+- the ps driver does not add  EPSF-3.0 to the first line, in order
+  to not overplot multi-page prints (via CUPS e.g.).
+
+- Peter Williams (pkwill@astro.berkeley.edu) added autotools support,
+  he also distributes this from his own webpage as pgplot-remix; see
+     http://www.newton.cx/~peter/software/pgplot-remix-5.2.2.0.tar.gz
+  (check version numbers, they may change obviously)
+  The CVS based CARMA distribution of this remix *ought* to be the
+  same, but during the development (summer 2007) there may be some
+  lag in the CVS version.
+
+The following changes would be nice:
+------------------------------------
+
+- A default PGPLOT_DIR (currently /usr/local/pgplot) be changed
+  to whereever PGPLOT is installed during installation.

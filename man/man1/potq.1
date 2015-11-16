@@ -1,0 +1,77 @@
+.TH POTQ 1NEMO "23 February 2002"
+.SH NAME
+potq \- query a NEMO potential in the XY plane
+.SH SYNOPSIS
+\fBpotq\fP [parameter=value]
+.SH DESCRIPTION
+\fBpotq\fP queries a potential and forcefield in the XY plane for
+a number of radii, and reports some quantities of the
+potential.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBpotname=\fP
+Name of potential. No default.
+.TP
+\fBpotpars=\fP
+Parameters for potential (1st one is pattern speed)
+.TP
+\fBpotfile=\fP
+Any optional data file associated with potential []
+.TP
+\fBr=\fP
+Radii to sample to find Qt_max [0:2:0.1] 
+.TP
+\fBt=\fP
+Time to test potential at, if relevant [0.0]
+.TP
+\fBomega=\fP
+Use this instead of any returned pattern speed. Not used.
+.TP
+\fBformat=\fP
+Format used to print numbers [%g]  
+Not used.
+.TP
+\fBniter=\fP
+max #iterations to find qt.
+[10]      
+.TP
+\fBeps=\fP
+minimal fractional change in qt to abort iterations 
+[0.001]    
+.SH EXAMPLES
+The following example prints the radius, Q_b and an estimate of the
+uncertainty in Q_b based on the convergence speed (\fBeps=\fP):
+.nf
+% potq pfenniger84 r=1:10:1
+ 1 0.497721   0           10
+ 2 0.517117   0.000606655 8
+ 3 0.426776   0.000922551 8
+ 4 0.275563   0.000832961 8
+ 5 0.10667    0.000569431 8
+ 6 0.0305462  0.000926259 6
+ 7 0.0177048  0.000573299 6
+ 8 0.0118711  0.000401105 6
+ 9 0.00860622 0.000298991 6
+10 0.00656493 0.000234145 6
+.fi
+where the last column is the number of iterations.
+.SH SEE ALSO
+potccd(1NEMO), potrot(1NEMO), potential(5NEMO)
+.SH FILES
+src/orbit/potential	source code
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+23-Feb-02	V1.0 Created	PJT
+8-feb-05	V1.0c  fixed initialization bug 	PJT
+.fi
+
+
+
+
+
+

@@ -1,0 +1,15 @@
+#! /bin/csh -f
+#
+#  since there are two rotcur.c files in NEMO, this is the one for
+#  the program, the other is a potential(5NEMO) 
+
+set dir=$NEMO/src/image/rotcur
+
+if (-e $dir) then
+  cd $dir
+  make rotcur
+  mv rotcur $NEMOBIN
+else
+  echo mknemo.d: $dir does not exist
+endif
+

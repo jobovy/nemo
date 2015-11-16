@@ -1,0 +1,66 @@
+# -*- makefile -*-
+#
+# sets library sub-directory and flags for gcc compiler
+# to be included by makefile 
+#
+
+ifndef GCC
+GCC		:= gcc
+GPP		:= g++
+endif
+
+EXT             := .gcc
+CXX             := $(GPP)
+CC              := $(GCC)
+FC              := gfortran
+
+PLATFORM 	:= $(shell uname -m)
+
+# warning flags
+ifdef LIMITED_WARNINGS
+WARNING		:= -Wall $(LIMITED_WARNINGS) -Wshadow
+else
+WARNING		:= -Wall -Wextra -Winit-self -Wshadow
+endif
+ifndef TBBROOT
+ifdef WDutilsDevel
+WARNING		+= -Wold-style-cast
+endif
+endif
+#WARNING		+= -Wno-unknown-pragmas
+
+# it seem that coverage (to be combined with gcov) does not work for openmp)
+#ifdef WDutilsDevel
+#PROFLAGS	:= --coverage -fprofile-use -Wcoverage-mismatch
+#endif
+# general optimisation and warning flags
+OPTFLAGS	:= -march=native -mfpmath=sse -mpreferred-stack-boundary=4 \
+		--param inline-unit-growth=50 -ggdb3 $(WARNING) -O2 -fPIC \
+		-funroll-loops -fforce-addr $(PROFLAGS) $(RDYNAMIC)
+
+ifneq ($(VENDOR),apple)
+OPTFLAGS	+= -rdynamic
+endif
+
+# these are actually to be set
+CFLAGS		:= $(OPTFLAGS)
+
+WARNING		+= -Woverloaded-virtual
+OPTFLAGS	+= -Woverloaded-virtual
+
+ifdef CXX11
+CXXFLAGS	:= -std=c++11 $(OPTFLAGS)
+else
+CXXFLAGS	:= $(OPTFLAGS)
+endif
+
+ifdef OPENMP
+CXXFLAGS	+= -fopenmp
+CFLAGS		+= -fopenmp
+LDFLAGS		:= -shared -fopenmp $(PROFLAGS)
+else
+LDFLAGS		:= -shared $(PROFLAGS)
+endif
+
+# end
+

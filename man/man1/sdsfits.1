@@ -1,0 +1,120 @@
+.TH SDSFITS 1NEMO "11 December 2004"
+.SH NAME
+sdsfits \- convert selected plane or coordinate descriptor of SDS HDF4 to FITS
+.SH SYNOPSIS
+\fBsdsfits\fP [parameter=value]
+.SH DESCRIPTION
+\fBsdsfits\fP converts an \fIhdf(1)\fP SDS dataset into 
+\fIfits(5NEMO)\fP image format. 
+The current version was written to fit a particular
+purpose, and will only properly convert a single 2D or 3D SDS
+dataset into a FITS image/cube. Selection must be made wich SDS dataset
+is converted (1=first) and optional the coordinate values can be written
+instead of the SDS values. The \fIfitsbrowser\fP toolset in HDF can also
+convert SDS from/to a FITS file (primary HDU).
+One can also reorder the axes in the data matrix/cube, albeit at a cost.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP\fIsds_file\fP
+Input file (SDS HDF file)   
+.TP
+\fBout=\fP\fIfits_file\fP
+Optional output FITS file. If no filename given, the input dataset
+is merely scanned and it's rank and size are reported.
+.TP
+\fPselect=\fP\fIfile_number\fP
+Select a \fIfile_number\fP (1 being the first) for output. Currently
+only one \fIfits\fP file at a time can be extracted.
+[Default: \fB1\fP].
+.TP
+\fPaxis=\fP\fIaxis_number\fP
+If non-zero, this coordinate axis will be dumped as a 1D array 
+in the fits file.
+Note the first axis is the one that described the fasted running
+index in the data-array (i.e. fortran array notation). A 0 is used if
+the 2/3D array is written.
+Default: 0.
+.TP
+\fPreorder=t|f\fP
+Reorder the axes. Normally the data is transferred to the FITS file
+"as is", without reordering, though SDS lists the axis backwards
+(NZ,NY,NX: where NX is the fastest running axis in fortran sense,
+and in FITS normally plotted horizontally). With \fBreorder=t\fP
+all data is reordered, which can take large resources for large SDS
+files.
+.TP
+\fPdummy=t|f\fP
+Write dummy axis that have dimension 1 also?
+[Default: \fBt\fP]
+.TP
+\fPwcs=t|f\fP
+Add a WCS to the fits file, as much as that is possible. By default
+(there is no keyword to change this yet) the first pixel (1,1,1) will
+be the reference pixel, and CDELT will be computed by the difference
+to the 2nd pixel along the appropriate axis. If there is no 2nd
+pixel, CDELT will be 1. If there is a 3rd pixel and the CDELT is
+different, a warning is posted. 
+[Default: \fBt\fP]
+.SH BUGS
+No known bugs, but there are some limitations in the current version:
+.PP
+1) input SDS must be a 2D or 3D - output will be the corresponding FITS
+image map/cube
+.PP
+2) the whole SDS is read into memory, no slicing.  Although this is fast,
+it limits the size of the cube to the (virtual) memory you have.
+.PP
+3) Only the required FITS header keywords NAXIS, NAXIS1, NAXIS2 and NAXIS3
+are written out.
+.PP
+.SH SEE ALSO
+snaphdf(1NEMO), hdf(1), lshdf(1), fitssds(1NEMO), tsd(1NEMO), fits2sds(1HDF), phdu2sds(1HDF)
+.nf
+
+http://hdf.ncsa.uiuc.edu/fits/index.html (fitsbrowser::fits2sds,phdu2shs)
+.fi
+.SH HDF
+The hdf format described here is the old classical "hdf4" format, not the new
+"hdf5" format. Within HDF there are many "dialect", in particular the
+so-called Multifile Scientific Data Set (SD) and 
+Single-File Scientific Data Set (DFSD).
+.SH EXAMPLES
+In this example the file hdf100bg has 3 SDS datasets of 19 cells in Y, and
+32 cells in X each.
+.nf
+% tsd hdf100bg
+Found 3 scientific data sets in hdf100bg
+1: R-VELOCITY AT TIME=2.00E+00(19,32) km/sec  -> [608 elements of type: 5 (FLOAT32)]
+2: PHI-VELOCITY AT TIME=2.00E+00(19,32) km/sec  -> [608 elements of type: 5 (FLOAT32)]
+3: DENSITY AT TIME=2.00E+00(19,32) Msolar/pc**2  -> [608 elements of type: 5 (FLOAT32)]
+
+% sdsfits hdf100bg map1.fits 3 reorder=f
+...
+Data: DENSITY AT TIME=2.00E+00 Msolar/pc**2 1pe8.2 Polar
+map1.fits: writing as FITS file
+Data min/max = 0.00177725 362.925
+
+% sdsfits hdf100bg map2.fits 3 reorder=t
+...
+Data: DENSITY AT TIME=2.00E+00 Msolar/pc**2 1pe8.2 Polar
+map2.fits: writing as FITS file
+reorder: 19 x 32
+Data min/max = 0.00177725 362.925
+
+.fi
+
+.SH FILES
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+19-Jan-95	V1.0 Created 	PJT
+13-apr-95	V1.1 added select=, fixed bug in 2D conversion	PJT
+13-apr-96	V1.2 added axis=	PJT
+14-jan-03	V1.4 added reorder=	PJT
+2-dec-04	V1.5 added dummy=, and fixed some 3D data bugs	PJT
+11-dec-04	V1.6 added wcs=, fixed some more bugs with 3D data		PJT
+.fi

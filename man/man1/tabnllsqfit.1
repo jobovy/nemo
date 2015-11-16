@@ -1,0 +1,381 @@
+.TH TABNLLSQFIT 1NEMO "9 October 2013"
+.SH NAME
+tabnllsqfit \- general purpose non-linear least squares fitting program
+.SH SYNOPSIS
+.PP
+\fBtabnllsqfit in=\fPtable-file [parameter=value]
+.SH DESCRIPTION
+\fBtabnllsqfit\fP takes a non-linear least squares fit (minimized ChiSquared)
+of a set of datapoints (x(i),y(i)) where a functional
+form y=f(x;p0,p1,...,pN) is assumed. The function is not required to
+be non-linear in it parameters. Although a number of common pre-defined
+functional forms can be selected (see \fBfit=\fP), you can also write
+a small C routine, and dynamically load the fitted function during
+runtime (see \fBload=\fP).
+.PP
+The inputfile is an ascii file in a tabular format, where on every line
+there must be an assigned column for the X- and Y-coordinate(s). 
+An optional column can be assigned to the errors in Y 
+(the DY-coordinates, the inverse square of these being used as
+a weight). If no
+DY-column is assigned, it is assumed that the errors in Y are all the
+same and equal to 1. Lines starting with the '#' symbol are comment 
+lines. Certain models (see \fBfit=\fP below) allow multiple X or Y
+columns. 
+.PP
+Each fit can also produce an output file with an additional column
+computing the difference between the data and the model (in that order).
+In the special case where the user has supplied no free parameters,
+the residuals are still computed correctly.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIin-file\fP
+(ascii) input file, a table of values from which data is taken. No default.
+.TP
+\fBxcol=\fIcol,...\fP
+The column(s) from which the (independant) X-values are taken. The first column
+is numbered 1 [default: \fB1\fP].
+.TP
+\fBycol=\fIcol,...\fP
+The column(s) from which the (dependant) Y-values are taken 
+[default: \fB2\fP].
+.TP
+\fBdycol=\fIint\fP
+Optional column from which the weights will be derived. By default
+this column is meant to refer to an error bar, and normally 
+the inverse square of the errors are uses as weights for those fits where
+these are used (see \fBdypow=\fP next).
+[default: none assigned].
+.TP
+\fBdypow=\fIpower\fP
+By changing this value, you can adjust the weights column (\fBdycol\fP).
+Instead of the normal \fIweight = 1/sigma^2\fP, you will be able to use
+them as \fIweight^dypow\fP. The most common use is when your
+\fBdycol\fP does not refer to an error, but to the weight directly
+(e.g. an intensity), in which case \fBdypow=-0.5\fP is appropriate.
+[default: 1].
+.TP
+\fBxrange=\fIxmin:xmax,xmin:xmax,...\fP
+Range in X-values for which the fit is done. A set of min:max,
+separated by comma's, can be given.
+This keyword cannot be used if more than one X-column is used.
+[default: no entry, i.e. all].
+.TP
+\fBfit=\fP\fImodel\fP
+Model name what to fit. Currently implemented are \fIline\fP, \fIplane\fP,
+\fIpoly\fP, \fIgauss1d\fP, \fIloren\fP, and \fIexp\fP.
+[default: \fBline\fP].
+.TP
+\fBorder=\fP\fIorder\fP
+Highest order of the polynomial fit (\fBfit=poly\fP) or 
+number of dimension of the hyper-plane fit (\fBfit=plane\fP). 0 would fit
+a constant. 
+[Default: \fB0\fP].
+.TP
+\fPout=\fIfilename\fP
+Optional output filename
+where the data and residuals are stored.
+The first few columns contain the X and Y columns, the last
+column contains the residual Y-F(X). See an example below how to plot
+the data with a model fit overlayed.
+[default: no output file created].
+.TP
+\fPnsigma=\fIsigma_factor\fP
+A positive number will delete points more than \fIsigma_factor\fP from the fit,
+and fit again. Multiple values can be given here, in which case
+multiple iterations are done.
+[Default: \fB-1\fP].
+.TP
+\fBpar=\fP
+Initial estimates for the parameters. For non-linear fits, or linear fits where
+certain parameters are fixed (see \fBfree=\fP below) they need to be given here.
+Some fits (e.g. gauss1d) do not require an initial estimate and attempt to come
+up with a reasonable one.
+Otherwise all initial parameters are 0.
+.TP
+\fBfree=\fP
+A list of 1's and 0's to set which parameters are to be kept free (1) and which
+are fixed (0). By default all parameters are free, i.e. fitted. If any
+parameter is fixed, initial estimates for all need to be given (see \fBpar=\fP).
+Default: all parameters free.
+.TP
+\fBload=\fP
+If given, this should contain the full path to a compiled and 
+shared object (.so) file) that contains the function to be fitted 
+in terms of the \fInllsqfit\fP parameters \fIf\fP and \fIdf\fP. They
+must be named \fBfunc_loadobj\fP and \fBderv_loadobj\fP
+(maybe modified with fit=). See LOAD FUNCTIONS below.
+.TP
+\fBx=\fP
+If given, these are the X-values for which the load function can be tested.
+It is useful for testing and debugging your function. It will report
+the X, Y and the dY/dPAR vector values. The program will exit after
+this, and no fitting is done.  If the first two values are the \fBsame\fP,
+a numerical derivate is computed (see below).
+Default: none.
+.TP
+\fBnmax=\fP\fImax_lines\fP
+Maximum number of lines allocated if the input file was being read
+from a pipe. If not, the routine \fIfile_lines(3NEMO)\fP is used
+to allocate space for the table.
+[Default: \fB10000\fP].
+.TP
+\fBtol\fP=
+Tolerance for convergence of \fInllsqfit\fP
+[Default: \fB0.0\fP].
+.TP
+\fBlab\fP=
+Mixing parameter for \fInllsqfit\fP [Default: \fB0.0\fP for linear,
+\fB0.1\fP for non-linear fits].
+.TP
+\fBitmax\fP=
+Maximum number of allowed \fInllsqfit\fP iterations [Default: \fB50\fP]
+.TP
+\fBformat\fP=
+Output format. Default %g
+.TP
+\fBbootstrap\fP=
+Number of bootstrap samples to take to estimate the error in the parameters.
+Output off all parameters and their errors are on one line containing
+the word bootstrap. Parameters and their errors are output in pairs.
+Default:0
+.TP
+\fBseed=\fP
+Initial seed. See \fIxrandom(3)\fP for more
+details. Default: 0
+.TP
+\fBmethod=g|n|m\fP
+Fitting method. Gipsy uses their \fInllsqfit(3NEMO)\fP, NumRec uses their
+\fImrqfit\fP and MINPACK uses \fImpfit(3NEMO)\fP.  Only first character
+is used, case insensitive.  [Default: \fBg\fP]
+.SH FIT PARAMETERS
+Parameters are referred to as p0,p1,p2,p3,.....
+.nf
+.ta +1.5i 
+line     	y=p0+p1*x                        (same as poly,order=1)
+plane       	z=p0+p1*x+p2*y                   (example order=2)
+polynomial  	y=p0+p1*x+p2*x^2+p3*x^3...       (example order=3)
+gauss1d       	y=p0+p1*exp(-(x-p2)^2/(2*p3^2))
+gauss2d       	y=p0+p1*exp(-[(x-p2)^2+(x-p3)^2]/(2*p4^2))
+exp		y=p0+p1*exp(-(x-p2)/p3)
+grow		y=p0*(exp(x/p1)-1)
+arm		y=p0+p1*cos(x)+p2*sin(x)
+arm3		y=p0+p1*cos(x)+p2*sin(x)+p3*cos(3*x)+p4*sin(3*x) 
+loren		y=p1/PI( (x-p0)^2 + p1^2 )
+psf		y=p1*x^p2*sin(y)^p3+p4
+.fi
+.SH EXAMPLE
+Here is an example of a linear fit: a straight 
+line, with some added noise and random weights between 1 and 2:
+.nf
+% nemoinp 1:100 |\\
+	tabmath - - "%1+rang(0,10),ranu(1,2)" seed=123 |\\
+	tabnllsqfit - 1 2 3
+nrt=0
+Fitting a+bx:  
+a= 1.50492 2.25695 
+b= 1.00159 0.0380961
+.fi
+Here is an example of a 2D plane  in 3D: (1+2x+3y)
+.nf
+
+% ccdmath "" - '1+2*%x+3*%y+rang(0,0.1)' 5,5 seed=123 |\\
+	ccdprint - x= y= label=x,y newline=t |\\
+	tabnllsqfit - 1,2 3 fit=plane order=2
+nrt=0
+Fitting p0+p1*x1+p2*x2+.....pN*xN: (N=2)
+p0= 1.0688 0.0523819
+p1= 2.01497 0.0165646
+p2= 2.97436 0.0165646
+
+
+.fi
+And a fit to a gaussian:
+.nf
+% nemoinp 1:100 |\\
+	tabmath - - '4+exp(-(%1-50)**2/(200))+ranu(0,1)' seed=123 |\\
+	tabnllsqfit - fit=gauss1d par=4,1,50,10
+nrt=13
+Fitting a+b*exp(-(x-c)^2/(2*d^2)):  
+a= 4.46714 0.0416026 
+b= 1.13036 0.0994723 
+c= 50.2263 0.845469
+d= 8.70728  0.959347
+rms2/chi2= 8.92068
+rms/chi = 1
+
+.fi
+Here is a contrived example of plotting the function to be plotted, by fixing all
+parameters and computing a residual table from 0s:
+.nf
+
+% nemoinp 0:10:0.1 | tabmath - tab0 0
+% tabnllsqfit tab0 1 2 fit=gauss par=1,2,5,1 free=0,0,0,0 out=tab0.d
+% tabmath tab0.d - %1,-%3 | tabplot -
+
+.fi
+
+Here is an example of removing outlier points and fitting again:
+
+.nf
+
+% nemoinp 1:10 |\\
+   tabmath - - '2*%1+1+rang(0,0.1)' seed=123 |\\
+   tabnllsqfit - fit=line nsigma=1.5::3
+nrt=0
+Fitting a+bx:  
+a= 1.09548 0.0775617 
+b= 1.99937 0.0125002
+2/10 points outside 1.5*sigma (0.152328)
+nrt=0
+Fitting a+bx:  
+a= 1.02651 0.0452119 
+b= 2.01358 0.00753531
+0/8 points outside 1.5*sigma (0.080422)
+
+.fi
+Although 3 iterations were requested, after the first iteration no more
+points were removed, and the iterations were stopped.
+.PP
+Here is an example of estimating the errors via a bootstrap (resampling of errors) 
+method. Fitting a polynomial of order 2 and taking 100 bootstrap samples:
+.nf
+
+% tabnllsqfit tab11 fit=poly order=2 bootstrap=100
+nrt=0
+Fitting p0+p1*x+p2*x^2+.....pN*x^N: (N=2)
+p0= 3.11325 0.192787
+p1= 1.97474 0.0896959
+p2= 0.00157311 0.008639
+bootstrap= 3.11603 0.164922 1.96464 0.086429 0.00293632 0.00820007 
+             ^^^^    ^^^^^   ^^^^^    ^^^^^    ^^^^^^      ^^^^^^
+              P0      dP0      P1      dP2       P3         dP3
+.fi
+
+.SH LOAD FUNCTIONS
+With the \fBload=\fP keyword dynamic object files can be loaded using the
+\fIloadobj(3NEMO)\fP mechanism. The convention is that two functions
+must be externally visible, and named \fIfunc_\fP\fImethod\fP and
+\fIderv_\fP\fImethod\fP  (where \fImethod\fP is the same as the
+\fBfit=\fP keyword.
+.PP
+Here is an example of the file \fBmyline.c\fP that can
+be used with \fBfit=line load=myline.so\fP and compiled with
+.nf
+	bake myline.so
+.fi
+
+.nf
+
+/* File:  myline.c  */
+
+#include <stdinc.h>
+
+real func_line(real *x, real *p, int np) 
+{
+  return p[0] + p[1]*x[0];
+}
+void derv_line(real *x, real *p, real *e, int np) 
+{
+  e[0] = 1.0;
+  e[1] = x[0];
+}
+
+
+.fi
+
+One word of caution: if you find the program having a hard time finding
+a solution in complex cases, it is quite possible that this is not due to
+the fact that the function is complex, but due to noise or bad initial
+conditions.
+.SH DERIVATIVES CHECK
+A common debug problem is to check the analytical derivatives in
+your external loaded function. The \fBx=\fP keyword can be used
+to check the function values (useful to plot up the function
+for a given set of parameters in \fBpar=\fP), in which also all
+the partial derivatives are listed:
+.nf
+   % cd $NEMO/src/kernel/tab/fit ; bake gaussn.so
+   % echo 1 1 | tabnllsqfit - load=gaussn.so fit=gaussn par=1,2,1,0.2 x=1.1:1.4:0.1
+   1.1 2.76499   1 0.882497 4.41248 2.20624
+   1.2 2.21306   1 0.606531 6.06531 6.06531
+   1.3 1.6493   1 0.324652 4.86979 7.30468
+   1.4 1.27067   1 0.135335 2.70671 5.41341
+.fi
+But to check if the analytical derivates in \fIderv_gaussn()\fP are correct, 
+repeating the same value of \fBx\fP a number of times, each parameter
+is incremented by a decreasing factor of 0.1 
+
+.nf
+   % echo 1 1 | tabnllsqfit - load=gaussn.so fit=gaussn par=1,2,1,0.2 x=1.4::4
+   # par iter Y dP  (Y-Y0)/dP   [(Y-Y0)/dP  - dY/dP]
+   0 0 1.37067 0.1 1 [8.88178e-16]
+   0 1 1.32067 0.05 1 [5.32907e-15]
+   ...
+   0 9 1.27087 0.000195313 1 [1.36424e-12]
+   1 0 1.2842 0.1 0.135335 [2.16493e-15]
+   ...
+   2 0 1.6493 0.1 3.78634 [1.07964]
+   2 1 1.43253 0.05 3.2372 [0.53049]
+   ...
+   2 8 1.27173 0.000390625 2.71067 [0.00396662]
+   2 9 1.2712 0.000195313 2.70869 [0.00198288]
+   3 0 1.82222 0.1 5.51554 [0.102129]
+   3 1 1.55607 0.05 5.70808 [0.294669]	
+   ...
+   3 8 1.27279 0.000390625 5.41867 [0.00525903]
+   3 9 1.27173 0.000195313 5.41605 [0.00263639]
+.fi
+You can see that the offset (par 0) and amplitude (par 1) of the gauss are well behaved (as they are linear),
+but the centroid (par 2) and width (par 3) of the gauss only slowly converge linearly with the step. The last
+number in square brackets is the error between numerical and analytical derivative.
+.SH CAVEATS
+It will not recognize linear fits if the non-linear parameters are kept fixed,
+e.g. the offset 0 in \fBfit=gauss1d\fP.
+.SH SEE ALSO
+tablsqfit(1NEMO), tabhist(1NEMO), tabmath(1NEMO), 
+gaussfit(1NEMO), linreg(1NEMO), nllsqfit(3NEMO), fit.dc1(GIPSY)
+.PP
+\fINumerical Recipies in C, Ch.14\fP
+.PP
+NLREG: http://www.nlreg.com
+.PP
+NIST non-linear: http://www.itl.nist.gov/div898/strd/lls/lls.shtml
+.PP
+NIST linear: http://www.itl.nist.gov/div898/strd/nls/nls_main.shtml
+.PP
+fityk: http://fityk.nieto.pl/
+.PP
+A new scheme for calculating weights and describing
+correlations in nonlinear least squares fits.
+(Hessler, Curent & Ogren, C.I.P. 10, 186, 1996): 
+http://dx.doi.org/10.1063/1.168569 
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+~/src/kernel/tab	tabnllsqfit.c
+~/src/kernel/tab/fit	example fitting functions
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+12-jul-02	V1.0 cloned off tablsqfit	PJT
+17-jul-02	V1.1 added load=, x=, numrec=		PJT
+11-sep-02	V1.1e  changes error/warning to accomodate residual writen	PJT
+21-nov-02	V1.4 nsigma= can be an array of iterations	PJT
+14-feb-03	V1.6 arm,arm3 for Rahul		PJT
+21-mar-03	V1.7 added bootstrap=, seed=	PJT
+4-apr-03	V1.8 fixed error in using dycol=, and introduced dypow=		PJT
+15-mar-04	V1.8b added fit=loren and corrected lab= setting for functions	PJT/RS
+21-nov-05	V2.0 added fit=gauss1d,gauss2d		PJT
+24-apr-08	V2.1 added psf	PJT
+7-may-10	V2.2 added grow		PJT
+24-dec-11	V2.3b estimate gauss1d if no initial par given	PJT
+9-dec-12	V3.0 new style xrange= with multiple segments	PJT
+9-oct-13	V4.0 numrec= is now method=  for mpfit trials, add function deriv checker	PJT
+.fi
+

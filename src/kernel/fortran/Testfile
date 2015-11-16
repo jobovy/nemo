@@ -1,0 +1,19 @@
+DIR = src/kernel/fortran
+BIN = 
+NEED =$(BIN) unfio ftoc
+
+#	no testing done here yet 
+
+
+help:
+	@echo $(DIR)
+need:
+	@echo $(NEED)
+
+clean: 
+	@echo Cleaning $(DIR)
+
+all:	$(BIN)
+
+func:
+	($(MAKE) funcc; $(EXEC) funcc)

@@ -1,0 +1,62 @@
+DIR = src/nbody/io
+BIN = stoa atos tabtos snaptipsy tipsysnap snapgadget gadgetsnap 
+NEED = $(BIN) mkplummer snapprint snapcmp
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -f stoa.out stoa.cmp atos.out st.out ts.out mp.out  sg.out gs.out \
+		tabtos.in tabtos.out tabtos.cmp
+
+NBODY = 10
+
+all:	$(BIN)
+
+stoa:
+	@echo Running stoa
+	$(EXEC) mkplummer - $(NBODY) | stoa - stoa.out ; nemo.coverage stoa.a
+
+atos:
+	@echo Running atos
+	$(EXEC) atos stoa.out atos.out ; nemo.coverage atos.c
+	$(EXEC) stoa atos.out stoa.cmp ; nemo.coverage stoa.c
+	@echo Running diff stoa.out stoa.cmp
+	diff stoa.out stoa.cmp
+
+T = dark
+
+mp.out:
+	$(EXEC) mkplummer mp.out $(NBODY)
+
+snaptipsy: mp.out
+	@echo Running snaptipsy:
+	$(EXEC) snaptipsy mp.out st.out mode=$(T) ; nemo.coverage snaptipsy.c
+
+tipsysnap:
+	@echo Running tipsysnap
+	$(EXEC) tipsysnap st.out ts.out mode=binary options=$(T) ; nemo.coverage tipsysnap.c
+	@echo Running snapcmp
+#	tsf ts.out; tsf mp.out
+	$(EXEC) snapcmp ts.out mp.out
+
+snapgadget: mp.out
+	@echo Running snapgadget
+	$(EXEC) snapgadget mp.out sg.out N=$(NBODY),0,0,0; nemo.coverage snapgadget.c
+
+gadgetsnap:
+	@echo Running gadgetsnap
+	$(EXEC) gadgetsnap sg.out gs.out ; nemo.coverage gadgetsnap.c
+
+
+tabtos:
+	@echo Running tabtos
+	$(EXEC) mkplummer - $(NBODY) | $(EXEC) snapprint - m,x,y,z,vx,vy,vz > tabtos.in
+	$(EXEC) tabtos tabtos.in tabtos.out "" mass,pos,vel times=0  ; nemo.coverage tabtos.c
+	$(EXEC) snapprint tabtos.out m,x,y,z,vx,vy,vz > tabtos.cmp
+	@echo Running diff tabtos.in tabtos.cmp
+	diff tabtos.in tabtos.cmp

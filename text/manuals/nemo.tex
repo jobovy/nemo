@@ -1,0 +1,437 @@
+% NEMO LaTeX manual - needs a lot of .inc files to input, and .sty file
+%	for a style definition, and makeindex utility
+%\nonstopmode			% prevent exiting when errors occur
+\newcommand{\manual}{nemo}      % Used in a 'typeout' command at the end...
+
+% use a few TeX tricks to conditionally compile the manual...
+% Just add a new variable when one needed
+\newif\ifdebug
+\newif\ifbima
+\newif\ifindex
+\newif\ifnemo
+\newif\ifdoplot
+\newif\ifPDF
+
+%% Define variables {var} needed in this document: \{var}true or \{var}false
+%% These are TeX tricks...
+%% DEBUG:  if true, margins contain index, as well as label stuff
+%% BIMA:   if true, manual may contain some BIMA specific stuff
+%% INDEX:  if true, an index is required
+%% NEMO:   if true, manual may contain some NEMO specific stuff
+%% DOPLOT: if true, implicitly insert postscript commands for plots.
+\debugfalse
+\bimafalse
+\indextrue
+\nemotrue	% some .inc files may be shared with miriad (bima)
+\doplottrue
+
+% PDF should be auto-detected
+\ifx\pdfoutput\undefined\PDFfalse
+\else\ifnum\pdfoutput > 0\PDFtrue
+     \else\PDFfalse
+     \fi
+\fi
+
+\newsavebox{\FrameCoverPage}
+\newenvironment{FrameCover}[4]%
+{\begin{lrbox}{\FrameCoverPage}\begin{minipage}[#1][#2][#3]{#4}}%
+{\end{minipage}\end{lrbox}\fbox{\usebox{\FrameCoverPage}}}
+
+\newcommand{\bmp}[2][t]{\begin{minipage}[#1]{#1}}
+\newcommand{\emp}{\end{minipage}}
+
+\newcommand{\FramePix}[3][t]{\fbox{\bmp[#1]{#2} #3 \emp }}
+
+
+% HISTORY - in reverse chronological order -
+%        7-jun-05 : rework for book style
+%	17-may-01 : style->class for latex2e
+%        7-apr-01 : dreaded update of manual for NEMO V3
+%	16-feb-96 : finally, html for latex2html 96.1
+%	25-jan-94 : added html.sty stuff for an online version
+%	15-nov-83 : another formal version for Ensenada / Aguilar
+%       20-aug-93 : some final editing for GRAPE workshop
+%	22-jan-93 : debug statement on frontpage - add (VO)GL movie stuff
+%	18-sep-92 : added epsf support instead of \special
+%	25-may-92 : some more small formatting and typos
+%	16-nov-91 : finished some long forgotten stuff - for minor Export
+%       22-jul-91 : streamlined included figures in the text
+%	28-jun-91 : various history comments may now appear in the .inc files...
+%		    a .sty file was also attempted
+%       14-mar-91 : Breakup of manual using \input; .inc files extension
+%        9-Dec-90 : various things while at IAS 
+%       21-nov-90 : more small Rel2 updates
+%       10-nov-90 : lot's of little DOC changes for new NEMO 2.0
+%       17-oct-90 : more definitions in header - tryout
+%       24-Aug-90 : random moving around of stuff
+%        6-Aug-90 : Hat Creek addenda - more figures...?
+%        3-jul-90 : added mathematica stuff - Yuang's version
+%       20-may-90 : various additions for Pittsburgh workshop
+%        4-apr-90 : few small things before sending off to Leiden, added refs
+%       30-jan-90 : lots off little things
+%       27-nov-89 : HOSTTYPE additions all over the place
+%       27-oct-89 : cosmetic updates
+%       12-sep-89 : MD updates - added an index
+%       12-mar-89 : IAS updates
+%        8-mar-89 : MD updates (manual for Lee Mundy's class)
+%       21-Feb-89 : Princeton updates
+%        1-jan-89 : more additions (mainly in system help keyword)
+%       16-nov-88 : some additions for new release
+%       13-jun-88 : back at UIUC again
+%       30-may-88 : repair lost version from UIUC
+%       28-mar-88 : initial shitty document converted to LaTeX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifindex
+   % do nothing, \index definition from latex is used
+\else
+ \def\index#1{}                                  % no \index{} available or wanted
+\fi
+
+\ifdebug
+ \def\mylabel#1{\index{mylabel,#1} \label{#1}}   % debug version (label index)
+ \def\myfile#1{\index{myincfile,#1}}		 % ==old
+ \def\myincfile#1{\index{myincfile,#1}}		 % index for inc files
+ \def\mysrcfile#1{\index{mysrcfile,#1}}		 % index for src files
+\else
+ \def\mylabel#1{\label{#1}}                      % final version
+ \def\myfile#1{}			         % ignore myfile
+ \def\myincfile#1{}			         % ignore myincfile
+ \def\mysrcfile#1{}			         % ignore mysrcfile
+\fi
+
+% PSINSERT is now done using EPSF STY from DVIPS - more portable
+% \ifdoplot
+%   \input psinsert.inc                          % Insert plot command definitions
+% \fi
+
+%                      twoside
+%                      11pt
+\documentclass[headsepline,normalheadings,draft]{book}
+
+\usepackage{epsfig}
+\usepackage{html}
+\usepackage{nemo}
+\usepackage{layout}
+\usepackage{makeidx}
+\usepackage[english]{babel}
+% \usepackage{ahpage}
+
+\usepackage[T1]{fontenc}
+\ifPDF
+%  \usepackage[pdftex]{graphicx,color}
+%  \usepackage[pdftex]{hyperref}
+\else
+%  \usepackage[dvips]{graphicx}
+%  \usepackage[dvips]{hyperref}
+\fi
+
+\makeindex
+
+\title{ {\Huge NEMO} \\
+           {\LARGE USERS \\ 
+                   and \\
+               PROGRAMMERS \\ 
+                  GUIDE}}
+
+
+\author{
+ {P. J. Teuben} \\
+ {Astronomy Department} \\
+ {University of Maryland} \\
+ {College Park, MD 20742}
+       }
+
+\date{{\small Version 3.2-MD} \\
+      {\small Summer 2005} \\
+      {\small Last document revised: \today\ by PJT} 
+     }
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\frontmatter  
+
+% title from title/author/date
+%\maketitle
+
+
+%-title--------------------------------------------------
+% 
+% \begin{FrameCover}{c}{3in}{s}{2.50in}
+% \vspace*{\stretch{1}}
+% \begin{flushright}
+% \textit{\LARGE NEMO \\[5mm]
+% \LARGE PROGRAMMERS and USERS GUIDE}
+% \rule{\linewidth}{.8mm}
+% \end{flushright}
+% \vspace*{\stretch{2}}
+% \FramePix[b]{.5in}
+% {\bfseries Logo\\ Here}
+% \hspace{.1in}
+% 
+% \bmp[b]{1.2in}
+% \hspace*{.4in}
+% \large\textsc{Peter}
+% 
+% \hspace*{.4in}
+% \large\textsc{ Teuben}
+% \emp
+% 
+% \end{FrameCover}
+
+\newpage
+%-title--------------------------------------------------
+\thispagestyle{empty}
+                                                                                        
+\begin{flushright}
+\vspace*{2.5in}
+{\huge NEMO }
+\vspace{0.5in}
+{\huge USERS and PROGRAMMERS GUIDE}
+\vspace{1in}
+
+
+{\Large
+Peter J. Teuben\\
+Astronomy Department \\
+University of Maryland \\
+College Park, MD 20742
+}
+
+\vspace{1in}
+
+{\small Version 3.2-MD} \\
+{\small Summer 2005} \\
+{\small Last document revised: \today\ by PJT} 
+
+\end{flushright}
+%--------------------------------------------------------
+
+% \pagenumbering{roman}
+%\setlength{\oddsidemargin}{0.0in}
+%\setlength{\evensidemargin}{0.0in}
+%\setlength{\textwidth}{6.5in}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2.5mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% First page : title, author and date
+%
+%BAD?
+\begin{htmlonly}
+A \htmladdnormallink{postscript version}{ftp://ftp.astro.umd.edu/pub/nemo/nemo.ps.gz}
+is available. \index{postscript version}
+
+{\bf Warning:} The contents of this document are likely to change.
+It is advisable not to use links to any pages other than the first
+page (this page). Small latex2html conversion problems remain.
+\end{htmlonly}
+
+%BAD?
+%\begin{abstract} 
+%NEMO is a Stellar Dynamics Toolbox ...
+%
+%This document presents the main features of NEMO, and
+%describes how to obtain, install, and use it.
+%\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{empty}
+%\begin{copyrightpage}
+\newpage
+% \vspace*{\fill}
+
+\small
+\section*{Copyright Notice/ Disclaimer}
+
+This package is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This package is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this package; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+\section*{Trademark Acknowledgments}
+UNIX is a registered trademark of AT\&T.
+CRAY and UNICOS are registered trademarks of Cray Research Inc.
+Sun is a registered trademark and Sun Workstation a trademark of Sun
+Microsystems Inc.
+% VAX and VMS are registered trademarks of Digital Equipment Corporation.
+PGPLOT is copyright by the California Institute of Technology (all
+rights reserved).
+Numerical Recipes is copyright by Numerical Recipes Software.
+LINPACK is courtesy of SIAM.
+
+
+\begin{center}
+\vspace{2 in}
+Copyright \copyright\ 1987,2001,2004\\
+Institute for Advanced Study, Princeton, NJ\\
+University of Maryland, College Park, MD\\
+all rights reserved
+\end{center}
+\normalsize
+\vspace*{\fill}
+% \end{copyrightpage}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 	Usual preamble with Table of Contents etc.
+\cleardoublepage
+\pagestyle{headings}
+\addcontentsline{toc}{chapter}{Table of Contents}
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%    Opening statements: disclaimer, readme and ack's and conventions
+\newpage
+
+\addcontentsline{toc}{chapter}{Disclaimer/No Warranty}
+\chapter*{DISCLAIMER/NO WARRANTY}
+\input disclaimer.inc
+
+\addcontentsline{toc}{chapter}{README}
+\chapter*{README}
+\input readme.inc
+
+\addcontentsline{toc}{chapter}{Acknowledgments}
+\chapter*{ACKNOWLEDGMENTS}
+\input ack.inc
+
+\addcontentsline{toc}{chapter}{CONVENTIONS}
+\chapter*{Conventions used in this Manual}
+ \input convent.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The real start of the manual
+\cleardoublepage
+\mainmatter
+% \pagenumbering{arabic}
+
+
+\part{General Introduction and Concepts}
+\mylabel{p:intro}
+\chapter                {Introduction}
+ \input intro.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {User Interface}
+ \input iface.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {File structure}
+\input filestr.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Graphics and Image Display}
+ \input graphics.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{Cookbook}
+\cleardoublepage
+\chapter                {Examples}
+ \input examples.inc
+% The above input also includes: potential.inc, image.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{Programmers Guide}
+\chapter                {Introduction}
+ \input progr.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {References}
+ \input refs.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+%\renewcommand{\thechapter}{\Alph{chapter}}
+%\setcounter{chapter}{0}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\part{Appendices}
+\mylabel{p:appendix}
+\chapter                {Setting Up Your Account}
+ \input setup.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {User Interface}
+ \input aiface.inc
+\section		{Miriad}
+ \input miriad.inc
+% NEMO V3: now deprecated
+%\section		{Mirtool}
+% \input mirtool.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Shell Scripts}
+ \input shell.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Directory Structure}
+ \input dirs.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Benchmarks}
+ \input bench.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Potentials}
+ \input potname.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Units and Coordinate Systems}
+ \input coordsys.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {GNU Scientific Library}
+ \input gsl.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Installation, updates and exporting}
+ \input install.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Troubleshooting}
+ \input trouble.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Glossary}
+ \input glossary.inc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\chapter                {Future, Present and Past}
+ \input history.inc
+
+% \layout
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END OF DOCUMENT - The rest if index stuff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cleardoublepage
+\backmatter
+
+\ifindex
+ \addcontentsline{toc}{chapter}{Index}
+ \printindex            % only when using the [makeidx] document-style option
+\fi
+
+%
+\typeout{### Type: makeindex <\manual.idx > \manual.ind}
+\typeout{###   To convert the .idx file to an .ind file}
+\typeout{###   in case the index file needs to be regenerated}
+
+\end{document}

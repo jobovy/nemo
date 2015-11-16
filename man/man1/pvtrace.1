@@ -1,0 +1,155 @@
+.TH PVTRACE 1NEMO "9 June 2009"
+.SH NAME
+pvtrace \- PV diagram envelope tracing 
+.SH SYNOPSIS
+\fBpvtrace\fP in=image [parameter=value] 
+.SH DESCRIPTION
+\fBpvtrace\fP tries to recover the rotation curve from a single 
+position-velocity (PV) diagram, by tracing the outer edges of
+the signal that, after correction for a velocity dispersion
+factor, is the material with the maximum amount of tangential
+motion.
+This is particularly appropriate for high-inclination 
+galaxies, where significant amounts of gas is observed below
+the rotation speed, due to line-of-sight integrations and simple
+moments in velocity or gaussian fits fail to recover the appropriate
+rotation speed.
+.PP
+The rotation velocity, V, is determined from a terminal velocity V_t
+in the usual way:
+.nf
+	V = (V_t - V_sys)/sin(i) - sigma
+.fi
+but corrected for a dispersion factor sigma.
+The terminal velocity is defined by the velocity at which the intensity
+becomes equal to
+.nf
+	I_t = sqrt( (eta*I_max)^2 + (I_lc)^2 )
+.fi
+where I_max is the maximum intensity in the map, and I_lc the lowest contour
+(usually 3 times the noise in the PV diagram). Both eta and I_lc can be
+set via parameters to the program. Typical values for eta = 0.2 - 0.5.
+.PP
+In addition, this program will also perform the usual peak fit,
+gaussian fit, and simple first moment analysis. See OUTPUT below for
+the output format. For
+lower inclinations, the envelope tracing method should give
+simular results to the other methods.
+.PP
+MET = Modified Envelope Tracing method  (Gentile et al., see below)
+.nf
+	V = [ |V_t - V_sys| - 0.5 sqrt(sigma^2 * 8ln2) ] / sin(i)
+.fi
+where sigma is really the quadrature sum of three components representing
+the ISM, instrumental resolution and beam smearing.
+.PP
+WAMET = WArped Modified Envelope-Tracing method
+
+.SH PARAMETERS
+.TP 20
+\fBin=\fP
+Input image file - must be an PV \fIimage(5NEMO)\fP with position
+along the 1st axis, and velocity along the 2nd. Units are not
+important. Use \fBccdsub reorder=xzy\fP for an X-Y-VZ cube to 
+be properly reordered. No default.
+.TP
+\fBeta=\fP
+[0..1] weight factor for I_max adding to I_lc. [Default: 0.2]
+.TP
+\fBilc=\fP
+Lowest Contour value. Normally taken as something like 3 times the noise level. 
+[Default: 0]
+.TP
+\fBsign=-1|1\fP
+Designates rotation of the galaxy. This is only important for tracing the 'right'
+part of the PV diagram. sign=1 is meant for PV diagrams where the approaching
+side is for positive positions. By using the "wrong" value of sign you can
+find out something about the radial extent of the tracer, as for large
+radii this would cause small values of dV/dR. For a known rotation curve
+using sign=1 one could determine the radial extent from sign=-1.
+[Default: 1]
+.TP
+\fBsigma=\fP
+Velocity dispersion correction factor. This includes both the observational
+resolution as well as the velocity dispersion of the tracer component that is
+being observed. [Default: 0]
+.TP
+\fBclip=\fP
+Clipping values to aid removing noisy values around 0. 
+If value(s) given, signal will be clipped as follows:
+if one value given, clipping occurs between -clip and clip. If two numbers
+given, clipping occurs between clip(1) and clip(2). Default: None
+.TP
+\fBvsys=\fP
+Systemic velocity of the galaxy.
+Since the velocity axis (assumed to be the 2nd or Y-axis), this number
+is simply subtraced from each velocity determination. [Default: 0]
+.TP
+\fBinc=\fP
+Inclination of the galaxy. Each rotation speed is corrected by sin(inc).
+[Default: 90]
+.TP
+\fBcenter=\fP
+Center of the galaxy along the Position axis. 
+[Default: 0]
+.TP
+\fBrotcur=t|f\fP
+Should a folded rotation curve be tabulated? If so, negative positions will have
+both position and velocity with a positive sign, thus creating two rotation
+curves, receding and approaching, which can be plotted on top of each other
+and compared. [Default: false]
+.TP
+\fBout=\fP
+Output file in case input file was a cube and output is now a map, not a table.
+.TP
+\fBmode=\fP
+Which of the output modes (see OUTPUT below) will be used for the output map.
+[Default: 2]
+.SH OUTPUT
+Output of the program will be an ASCII table, with various derived velocities
+as function of position along the P axis in the PV-diagram. The following
+columns are returned (see also \fBmode=\fP above):
+.PP
+.nf
+.ta +0.5i
+1	position from the P-axis of the PV diagram
+2	envelope tracing (corrected with vsys, sini, and sigma)
+3	first moment (sum(I*v)/sum(I))  (corrected with vsys, sini)
+4	velocity at peak of signal
+5	velocity at peak of parabolic fit of 3 points at peak signal
+6	gaussian fit
+7	half gaussian fit
+8	half gaussian fit, with for MET correction
+.fi
+.SH CAVEATS
+Position axis must be carefully created such that the galaxy center is at P=0,
+whereas for velocity it can be corrected with VSYS=. This is easy for theoretical
+data, but cumbersome for real data.
+.PP
+The MET mode is still not very robust, clipping helps.
+.SH SEE ALSO
+rotcur(1NEMO), runvelfitss07(1NEMO), ccdvel(1NEMO), snapgrid(1NEMO), ccdmom(1NEMO), ccdsub(1NEMO)
+.PP
+.nf
+Sancisi & Allen 1979
+Sofue, Y. 1996 ApJ 458, 120
+Sofue et al 1997 PASJ 49, 17
+Sofue et al 523, 136 
+Sofue et al (1997AJ....114.2428S)
+Gentile et al. (2004MNRAS.351..903G) - MET/WAMET method
+.fi
+.SH FILES
+.nf
+.ta +2i
+src/image/rotcur	sources
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+5-May-01	V1.0 Created	PJT
+6-may-01	V1.1 clip=, interpolated to find trace  	PJT
+18-mar-09	V1.3 added rotcur=	PJT
+9-jun-09	V1.4 implemented MET=	PJT
+.fi

@@ -1,0 +1,31 @@
+.TH INDEX 1NEMO "17 April 2004"
+.SH NAME
+gsl \- index of GSL commands and utilities
+.SH DESCRIPTION
+These \fBgsl\fP \fIcommands\fP and \fIutilities\fP  are wrappers
+around a number of useful routines from the
+GNU Scientific Library, integrated in NEMO.
+.SH "LIST OF NEMO GSL WRAPPER COMMANDS (help=)"
+The following programs currently have optional GSL components
+.sp 2
+.nf
+.ta +1.0iC +1.2iC +2.5iL
+\fIName\fP	\fIDescription\fP
+.ta +1.2iL +1.2iL +3.5iL
+.sp 5p
+tabpoly   	gsl_poly_eval, ... gsl_poly_complex_solve  [7-sep-01]
+xrandom    	gsl_rng-_*  (seed=name[,value])  [8-sep-01]
+tabspline	gsl_spline-*  (type=name, nder=)
+tablsqfit	-todo- (see also tablsqfit_lsq)
+.SH SEE ALSO
+.nf
+http://sources.redhat.com/gsl/
+.fi
+.SH BUGS
+.SH AUTHOR
+Peter Teuben
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+8-sep-01	first GSL integrations	PJT
+.fi

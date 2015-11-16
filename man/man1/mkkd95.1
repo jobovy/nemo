@@ -1,0 +1,339 @@
+.TH MKKD95 1NEMO "5 August 2006"
+.SH NAME
+mkkd95 \- Kuijken-Dubinski-95 composite disk-bulge-halo model
+.SH SYNOPSIS
+\fBmkkd95\fP [parameter=value]
+.SH DESCRIPTION
+\fBmkkd95\fP creates a composite Disk-Bulge-Halo galaxy in 
+near equilibrium following the procedure described in
+Kuijken & Dubinksi (1995). This program is merely a NEMO wrapper
+that assembles all the correct parameters, runs the a set
+of KD95 programs (commonly referred to as
+the GalactICS Software) in a temporary rundirectory and converts the
+ascii output to a NEMO \fIsnapshot(5NEMO)\fP. 
+.PP
+The bulge and halo are  a King and lowered Evans distribution
+resp, whereas the disk a 3D generalization of Shu's planar disk
+to include a 3rd integral of motion to account for the vertical
+structure. The construction occurs in 3 steps. First the potential
+is calculated, after which the disk distribution function
+is constructed which generates the given potential. Finally,
+each component is realized with a self-consistent distribution
+of particle orbits.
+.PP
+Although one
+has the option of including any combination of components,
+leaving out the halo probably won't work.
+.PP
+Two new versions have been published since the current 1995 K&D version:
+Widrow & Dubinski (2005) and Widrow, Pym and Dubinski (2008). These are
+not (yet) supported in the current \fBmkkd95\fP program.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBout=\fP
+output snapshot (a rundirectory $out.tmpdir is also created). 
+No default.
+.TP
+\fBndisk=\fP
+Number of particles in disk. Set them to 0 to leave out this
+component.
+Notice these are the first set (of three) of particles in the snapshot.
+ [8000]  
+.TP
+\fBnbulge=\fP
+Number of particles in bulge, the second set of particles in
+the output snapshot. [4000]  
+.TP
+\fBnhalo=\fP
+Number of particles in halo. 
+Notice these are the thirds and last set of particles in the snapshot.
+[6000]  
+.TP
+\fBpsi0=\fP
+in.dbh: Psi0 (HALO) 
+central potential - the smaller (the more negative) this parameter
+the deeper the potential and the more extended the halo
+[-4.6]    
+.TP
+\fBv0=\fP
+in.dbh:
+v0 = sqrt(2.0)*sigma0 where sigma0 is the central velocity
+dispersion. roughly the velocity where the halo rotation curve peaks
+[1.42]     
+.TP
+\fBq=\fP
+in.dbh: q 
+an optional flattening parameter for the potential - generally
+0.7 < q < 1.05 - q=1.0 will give a nearly spherical halo
+[1]     
+.TP
+\fBrck2=\fP
+in.dbh: (rc/rk)^2 
+a core smoothing parameter - ratio of the core radius to the
+derived King radius for halo only models set this
+to 1.0.  For multicomponent models, this can be a smaller
+number 0.0 to 0.1.  I've found that with this parameter=0.0 the
+program can crash.
+[0.1]     
+.TP
+\fBra=\fP
+in.dbh:
+Ra   - a scaling radius for the halo -
+The halo Ra radius is the radius at which the halo rotation curve, at its
+initial slope ignoring cutoffs and the other components, reaches v0.
+ [0.8]     
+.TP
+\fBmd=\fP
+in.dbh:
+M_d - mass of the exponential disk ignoring cutoffs
+[0.867]    
+.TP
+\fBrd=\fP
+in.dbh:
+R_d - exponential scale length
+[1]     
+.TP
+\fBrouter=\fP
+in.dbh: 
+R_outer - outer radius where we begin to truncate the disk density
+[5]     
+.TP
+\fBzd=\fP
+in.dbh: 
+z_d - disk scale height assuming a sech^2(z/zd) vertical density law
+[0.1]     
+.TP
+\fBdrtrunc=\fP
+in.dbh: 
+dR_trunc - truncation width - the disk density smoothly drops to zero in
+the range R_outer < R < ~R_outer + 2*dR_trunc.
+[0.5]     
+.TP
+\fBrhob=\fP
+in.dbh: 
+rho_b    - bulge central density
+[14.45]    
+.TP
+\fBpsicut=\fP
+in.dbh: 
+psi_cut  - bulge cut-off potential psi0 < psi_cut < 0.0
+         - energy cut-off for the bulge
+[-2.3]     
+.TP
+\fBsigb=\fP
+in.dbh: 
+sig_b    - bulge central potential
+[0.714]     
+.TP
+\fBdr=\fP
+in.dbh: delta_r 
+the width of the radial bins used to calculate the potential
+[0.01]     
+.TP
+\fBnr=\fP
+in.dbh: nr -
+number of radial bins - initially a guess since we don't know
+the radial extent of the system
+[2400]     
+.TP
+\fBlmax=\fP
+in.dbh: the largest value in the potential harmonic expansion - use
+lmax=2 to get a quick look at the mass profile and lmax=10 for
+the final calculation of the model
+ number of harmonics [10]   
+.TP
+\fBsigvr0=\fP
+in.diskdf: central radial velocity dispersion [0.47]  
+.TP
+\fBsigr0=\fP
+in.diskdf: scalelength of sig_r^2 [1.0]   
+.TP
+\fBncorr=\fP
+in.diskdf: number of intervals for correction function [50]
+.TP
+\fBniter=\fP
+in.diskdf: number of iterations [10]   
+.TP
+\fBfstreamb=\fP
+in.bulge: the streaming fraction of stars with L_z > 0.
+This controls the  rotation of the bulge and the halo,
+with f=0.5 the non-rotating case.
+[0.75]      
+.TP
+\fBfstreamh=\fP
+in.halo: see above, for the halo. [0.5]      
+.TP
+\fBiseed=\fP
+in.- Random Seed - KD95 convention. Notice this seed is shared
+by all 3 components. [-1]    
+.TP
+\fBzerocm=\fP
+in.- Center the snapshot? Notice again this is shared by all
+three components. [t]   
+.TP
+\fBbin=\fP
+directory in which KD95 binaries live. Unless your binaries 
+have been added  to your search PATH, you need to specify
+the directory where these live.
+ [.] 
+.TP
+\fBmodel=A|B|C|D\fP
+Base K&D95 model. The default model parameters above are 
+already for model-A,
+but with this keyword another one of the 4 published models can
+be quickly loaded. After that specific parameters can still
+be overriden by setting their value explicitly. By default
+model is not set via this method.
+.TP
+\fBnmodel=\fP
+Number of models computed. Useful if you want to stack a large
+number of models to increase signal to noise.
+Default: 1.
+.TP
+\fBcleanup=t|f\fP
+Cleanup the temporary run directory after usage. The
+contents of this directory is probably only useful for 
+debugging, it contains the output of all the individual programs
+and temporary files before final conversion to the \fIout\fP file.
+Default: t
+.SH PROCEDURE
+Creating a galaxy model from these parameters is sort of a black art
+since the halo and bulge models are not parameterized in terms of
+their mass profiles but rather properties of their distribution
+functions.  Changes in psi0, v0 etc. have weird but predictable
+effects on the mass profile.
+.PP
+The halo is a flattened analogue of the King model so the concentration
+(R_tidal/R_core) is determined by the dimensionless central potential
+psi_0/sigma_0^2.  The more negative the value the greater the
+concentration.  The parameters R_a and v_0, affect the scaling of the
+halo mass profile.
+.PP
+The effect of different bulge parameters is more predictable.  Decreasing the
+central velocity dispersion will create a more centrally concentrated
+bulge and decreasing the psi cut off will truncate the bulge and decrease
+its total mass.
+.PP
+The disk is parameterized directly by its mass profile so its effect on the
+rotation curve is predictable ahead of time.
+.PP
+Hit and miss seems to be a good strategy for finding a suitable profile.
+Generate a model to lmax=2 and then view the resulting rotation curve by 
+using the \fIvcirc\fP program, in  which 
+the contributions to the total rotation curve are tabulated.  Another useful
+file is \fImr.dat\fP which tells you the mass and radial extent of the disk
+bulge and halo.
+.PP
+The program \fIplotforce\fP will also generate the rotation curves for you
+directly from the dbh.dat, b.dat and h.dat files.
+.PP
+The potential is determined iteratively: starting from an initial
+guess at the potential, the density implied by the halo and bulge DFs
+is calculated, the disk density added, and the potential of that mass
+distribution is used as starting point for the next
+iteration. Initially only the monopole (l=0) components are calculated
+until the model converges, then one more harmonic is added per
+iteration up to the maximum requested, and once all harmonics are
+included the iterations are continued until the outer (tidal) radius
+of the halo is unchanged between iterations. At each iterations plots
+of the harmonic expansion coefficients are produced.
+If the tidal radius reported is "outside grid" for a large number of
+iterations, increase the number of radial bins or increase their
+size. Sometimes infinite tidal radii are also reported: this happens
+when the total mass of the model using the current guess for the
+potential is insufficient to generate a potential well as deep as
+requested. If this persists over many iterations, again increase the
+number or size of the radial bins.
+.PP
+.SH PROGRAMS
+Although \fBmkkd95\fP calls a number of KD95 programs, here is a brief
+explanation of some of them:
+.PP
+\fBdbh\fP calculates the potential. From in.dbh is computes
+dbh.dat, h.dat, b.dat and mr.dat.
+.PP
+\fBgetfreqs\fP tabulates various characteristic frequencies (omega, kappa etc.)
+in the equatorial plane for use by \fBdiskdf\fP. Input files are 
+dbh.dat h.dat b.dat, and it generates freqdbh.dat
+.PP
+\fBdiskdf\fP iteratively calculates the correction functions for
+the disk distribution function. These functions are multiplicative
+corrections to the surface density and vertical velocity dispersion
+which appear to leading order in the Shu (1969) distribution
+functions. See KD95 for details. The keywords
+sigrv0, sigr0, ncorr, niter are used for this.
+It also outputs the Toomre Q as a function of radius in the file
+toomre.dat.
+.PP
+\fBgendisk, genbulge, genhalo\fP assembled the respective components
+using an input file.
+.PP
+\fBmergerv\fP is a small shell script that merges the 3 ascii files.
+.SH PERFORMANCE
+The bulk of the CPU is in creating the disk particles, the bulge and halo are 
+a much smaller fraction of the cpu. On a 1.6 GHz Pentium-4 laptop the cpu cost is
+about \fI(Ndisk/1000)+32\fP secs for the gnu compiler (the 32 secs is to account for
+building tables, which is independantly of the number of particles.
+.SH EXAMPLES
+The default keywords are for Kuijken-Dubinski's model-A.
+
+.nf
+% mkkd95 A0.dat
+% snapmstat A0.dat sort=f
+0 0:7999  = 8000 Mass= 0.000108822 TotMas= 0.87058 CumMas= 0.87058
+1 8000:11999  = 4000 Mass= 0.00010631 TotMas= 0.425242 CumMas= 1.29582
+2 12000:17999 = 6000 Mass= 0.000819365 TotMas= 4.91619 CumMas= 6.21201
+% snapplot A0.dat color='i<8000?2.0/16.0:(i<12000?3.0/16.0:4.0/16.0)' yvar=z
+% snapxyz A0.dat - color='i<8000?1:(i<12000?2:4)' | xyzview - maxpoint=18000 nfast=18000 scale=8 fullscreen=t
+
+% mkkd95 B0.dat model=B
+% snapplot B0.dat color='i<1000?2.0/16.0:(i<2000?3.0/16.0:4.0/16.0)' yvar=z
+
+% mkkd95 C0.dat model=C
+% snapplot C0.dat color='i<4000?2.0/16.0:(i<6000?3.0/16.0:4.0/16.0)' yvar=z
+
+% mkkd95 D0.dat model=D
+% snapplot D0.dat color='i<1000?2.0/16.0:(i<2000?3.0/16.0:4.0/16.0)' yvar=z
+.fi
+.SH SEE ALSO
+gendisk, genbulge, genhalo, dbh, getfreqs, diskdf, snapmstat(1NEMO), tabtos(1NEMO), magalie(1NEMO)
+.nf
+http://www.astro.rug.nl/~kuijken/galactics.html     original GalactICS distribution
+.nf
+1995MNRAS.277.1341K - Kuijken, K.; Dubinski, J.  
+\fINearly Self-Consistent Disc / Bulge / Halo Models for Galaxies\fP
+.nf
+Widrow & Dubinski 2005 (version 2)
+.nf
+Widrow, Pym and Dubinski 2008 (version 3)
+.nf
+makegalaxy     https://bitbucket.org/lutorm/makegalaxy
+.fi
+.SH FILES
+.nf
+NEMO/src/nbody/init/mkkd95.c
+NEMO/usr/kuijken/GalactICS-exp/
+$out.tmdir/dbh.dat            contains tabulated values of the harmonic coefficients
+                  for the Legendre expansion of the density, potential and
+                  radial force at the specified radii for the entire model
+
+$out.tmdir/h.dat              same as above, but only for halo
+$out.tmdir/b.dat              same as above, but only for bulge
+$out.tmdir/mr.dat             mass and radial extent (or edge) of disk, bulge and halo
+.fi
+.SH AUTHOR
+Konrad Kuijken & John Dubinski (fortran programs - 1995)
+Peter Teuben (NEMO interface) -
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+06-Mar-04	V1.0 Created, using kd95's  README file 	PJT
+11-mar-04	V1.2 added nmodel= and warns about using model= 	PJT
+23-mar-04	V1.4 use logfile in tmpdir, added cleanup=, some key reorder	PJT
+19-jul-06	V1.5 fix POSIX problems and document order of particles better
+27-jul-06	fixed documentation on vcirc usage, disabled pgplot for ia64	PJT
+5-aug-06	merged two previous (CVS) docs	PJT
+.fi
+

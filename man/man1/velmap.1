@@ -1,0 +1,77 @@
+.TH VELMAP 1NEMO "4 February 2011"
+.SH NAME
+velmap \- various galactic velocity field mapping routines
+.SH SYNOPSIS
+\fBvelmap\fP [parameter=value]
+.SH DESCRIPTION
+VELMAP has various mapping routines that can be done on
+galactic velocity field.  The velocity field can be from
+observations, or a model.
+.PP
+In practice this also means that on a set of projected
+rings, defined by their radii, a center, position angle and inclination,
+various computations can be done and tabulated. 
+.PP
+An output map can be generated with amusing quantities. 
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+input velocity field, in \fIimage(5NEMO)\fP format. 
+.TP
+\fBradii=\fP
+radii of the ring boundaries. For N rings, N+1 values need to be give.
+They need to be sorted by increasing radius. 
+.TP
+\fBpa=\fP
+position angle of disk, in degrees. [0]
+.TP
+\fBinc=\fP
+inclination angle of disk, in degrees [45]   
+.TP
+\fBcenter=\fP
+rotation center. Default is the mapcenter ((Nx-1)/2,Ny-1)/2)
+where 0,0=center of lower left pixel.
+.TP
+\fBvsys=\fP
+systemic velocity [0]     
+.TP
+\fBden=\fP
+input density image, only needed if surface brightness (d) given in 
+an output mode. Default: not used.
+\fBmode=\fP.
+Default: none.
+.TP
+\fBfrang=\fP
+free angle around minor axis (2*frang is the total angle around
+the minor axis used).
+[Default: 0]
+.TP
+\fBblank=\fP
+Value of the blank pixel to be ignored. Default: 0.0
+.TP
+\fBmode=\fP
+Output mode for the output data file. Valid are:
+\fBv\fP, 
+\fBv/r\fP (angular velocity),
+\fBv*d/r\fP (angular velocity times surface brightness)
+.TP
+\fBout=\fP
+Optional output file.  See \fBmode=\fP which quantity. Default: none
+.TP
+\fBtab=\fP
+Optional output table file. This will contain the 
+radius, rotation speed, dispersion in the ring and some
+other values.
+.SH SEE ALSO
+rotcur(1NEMO), velfit(1NEMO), runvelfitss07(1NEMO), rotcurshape(1NEMO)
+.SH FILES
+src/image/rotcur : velmap.c
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +2.0i +4.0i
+3-feb-2011	created for Nurur	PJT
+.fi

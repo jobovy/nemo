@@ -1,0 +1,154 @@
+#! /bin/csh -f
+#
+#  Install GCC for NEMO ; from a source tree compilating and installation
+#  with optional GMP, MPFR and MPC libraries if not present. They will
+#  be located within the "install" directory where gcc is installed into
+#
+#  For 'astromake', a more typical call would be:
+#  
+#  set version=4.2.3
+#  ..../gcc.install src=gcc-$version  prefix=$ASTROMAKE/opt/gcc/$version version=$version fc=fortran
+# 
+#  For latest versions, see http://gcc.gnu.org/
+#
+#  new (4.4.0) versions require GMP 4.1+ and MPFR 2.3.2+. to build...????
+#  e.g.
+#  gcc.install \
+#        src=gcc-$version  prefix=$ASTROMAKE/opt/gcc/$version version=$version \
+#        gmp=4.3.2 mpfr=2.3.2
+#  See ftp://gcc.gnu.org/pub/gcc/infrastructure/
+#  and/or
+#  http://ftp.gnu.org/gnu/gmp/ 
+#  http://ftp.gnu.org/gnu/mpfr/
+#  http://www.multiprecision.org/
+#   gcc    gmp       mpfr     mpc
+#  4.4.5   4.?      2.3?      n/a
+#  4.5.1   4.2+     2.3.1+   0.8.0+
+#  4.6.3   5.0.4    3.1.0    0.8.2
+
+# TODO:     the 4.4 and 4.5 series with the gmp/mpfr needs don't compile yet :-(
+
+
+if ($?NEMO == 0) set NEMO=`pwd`
+
+#			 	.. command line keywords .. fc=f77 or f95 or fortran
+set src=$NEMO/local/gcc
+set prefix=$NEMO/opt
+set version=4.2.3
+set fc=fortran
+set gmp=0
+set mpfr=0
+set mpc=0
+
+#				.. parse command line ..
+foreach arg ($*)
+   set check = `echo $argv[1] | awk -F= '{print NF}'`
+   if ("$check" == 1) break
+   echo Setting: $arg
+   set $arg
+end
+
+set url=`printf ftp://ftp.gnu.org/pub/gnu/gcc/gcc-%s/gcc-%s.tar.bz2 $version $version`
+echo URL=$url
+set file=$url:t
+set src1=$file:r
+set src=$src1:r
+
+
+if (! -e $src) then
+  echo GCC source directory src=$src does not exist, try NEMO=
+  echo or:
+  echo " cd $NEMO/local"
+  echo " wget $url"
+  echo " tar jxf $file"
+  echo " ../src/scripts/gcc.install version=$version"
+  echo ""
+  echo "Known keywords to this script (and their current defaults):"
+  echo "  set src=$src"
+  echo "  set prefix=$prefix"
+  echo "  set version=$version"
+  echo ""
+  echo "After this is all installed, the path needs to be changed:"
+  echo '  set path=($NEMO/opt/bin $path)'
+  echo '  rehash'
+  exit 1
+endif
+
+
+cd $src
+mkdir -p build
+cd build
+
+echo Building in `pwd`, 
+echo reporting the status of 4 steps as we go along.. Be patient.
+echo Be sure to change your path and add $prefix/bin before your other path elements.
+
+if ($version:r:r == 3 && $fc != f77) echo "Warning: gcc3 should use fc=f77, not $fc"
+if ($version:r:r == 4) then
+  # 4.0.x and 4.1.x use f95, 4.2.x use fortran 
+  if ($version:r:e < 2 && $fc != f95) then
+    echo "Warning: gcc4 should use fc=f95, not $fc"
+  else
+    echo "Warning: gcc4 should use fc=fortran, not $fc"
+  endif
+endif
+
+set opts=()
+
+if (-d gmp-$gmp) then
+  echo pre-installing GMP $gmp
+  pushd gmp-$gmp
+  make -i clean >& /dev/null
+  ./configure --prefix=$prefix >& ../build0a.log
+  echo status $status on          ../build0a.log
+  make                         >& ../build0b.log
+  echo status $status on          ../build0b.log
+  make install                 >& ../build0c.log
+  echo status $status on          ../build0c.log
+  popd
+  set opts=($opts --with-gmp=$prefix)
+endif
+if (-d mpfr-$mpfr) then
+  echo pre-installing MPFR $mpfr
+  pushd mpfr-$mpfr
+  make -i clean >& /dev/null
+  ./configure --prefix=$prefix $opts >& ../build0d.log
+  echo status $status on                ../build0d.log
+  make                               >& ../build0e.log
+  echo status $status on                ../build0e.log
+  make install                       >& ../build0f.log
+  echo status $status on                ../build0f.log
+  popd
+  set opts=($opts --with-mpfr=$prefix)
+endif
+
+if (-d mpc-$mpc) then
+  echo pre-installing MPC $mpc
+  pushd mpc-$mpc
+  make -i clean >& /dev/null
+  ./configure --prefix=$prefix $opts >& ../build0g.log
+  echo status $status on                ../build0g.log
+  make                               >& ../build0h.log
+  echo status $status on                ../build0h.log
+  make install                       >& ../build0i.log
+  echo status $status on                ../build0i.log
+  popd
+endif
+
+# ieck, on 64bit need to add lib64 as well
+setenv LD_LIBRARY_PATH $prefix/lib
+
+# make -i distclean >& /dev/null
+../configure --prefix=$prefix --enable-threads $opts \
+    --enable-languages=c,c++,$fc >& build1.log
+echo status $status on build1.log
+
+make bootstrap   >& build2.log
+echo status $status on build2.log
+
+make             >& build3.log
+echo status $status on build3.log
+
+make install     >& build4.log
+echo status $status on build4.log
+

@@ -1,0 +1,71 @@
+DIR = src/nbody/trans
+BIN = snapcenter snaprotate snaprect snapinert snapsplit snapcopy snapadd \
+      snapdens snapshift snapstack snapmass
+NEED = $(BIN) mkplummer snapprint
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -f snap.in
+
+NBODY = 10
+
+test:   snapcenter snapsort snapstack snaptrim snaprotate snapdens \
+        hackdens snapscale unbind snapmask snapadd snaprect \
+        snapsphere snapmass snapspin snaptrans snapvirial
+
+all:	snap.in $(BIN)
+
+snap.in:
+	@echo Creating snap.in
+	$(EXEC) mkplummer snap.in $(NBODY) seed=123
+
+snapcenter: snap.in
+	@echo Running snapcenter
+	$(EXEC) snapcenter snap.in . weight=r report=t  ; nemo.coverage snapcenter.c
+
+snaprotate: snap.in
+	@echo Running snaprotate
+	$(EXEC) snaprotate snap.in - 45,60,45 xyz | csf - . ; nemo.coverage snaprotate.c
+
+snaprect: snap.in
+	@echo Running snaprect
+	$(EXEC) snaprect snap.in . ; nemo.coverage snaprect.c
+
+snapinert: snap.in
+	@echo Running snapinert
+	$(EXEC) snapinert snap.in - ; nemo.coverage snapintert.c
+
+snapsplit: snap.in
+	@echo Running $@
+	$(EXEC) snapsplit snap.in - nbody=1 | csf - . ; nemo.coverage snapsplit.c
+
+snapcopy: snap.in
+	@echo Running $*
+	$(EXEC) snapcopy snap.in - select=i | csf - . ; nemo.coverage snapcopy.c
+
+snapadd: snap.in
+	@echo Running $*
+	$(EXEC) snapadd snap.in,snap.in - | tsf -; nemo.coverage snapadd.c
+
+snapdens: snap.in
+	@echo Running $*
+	$(EXEC) snapdens snap.in - | tsf -; nemo.coverage snapdens.c
+
+snapshift: snap.in
+	@echo Running $*
+	$(EXEC) snapshift snap.in snap.in2 rshift=1,2,3 vshift=4,5,6;\
+	 nemo.coverage snapshift.c
+
+snapstack: snap.in
+	$(EXEC) snapstack snap.in snap.in2 - deltar=10,0,0 deltav=-1,0,0 | tsf -;\
+	 nemo.coverage snapstack.c
+
+snapmass: snap.in
+	$(EXEC) snapmass snap.in - mass=2.0 norm=4 | tsf -;\
+	 nemo.coverage snapmass.c

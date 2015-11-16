@@ -1,0 +1,21 @@
+#! /bin/csh -f
+#
+#  
+
+set dir=$NEMO/src/nbody/glnemo
+#set dir=$NEMO/usr/glnemo
+
+if (-e $dir) then
+  cd $dir
+  qmake
+  if ($status) then
+    echo "It appears as if the Qt library , or at least the development"
+    echo "package, has not been installed on your system."
+    exit 1
+  endif
+  make
+  make install
+else
+  echo mknemo.d: $dir does not exist
+endif
+

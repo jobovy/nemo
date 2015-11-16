@@ -1,0 +1,10 @@
+#! /bin/csh -f
+#
+#  Jin Koda's SPH code
+
+set dir=$NEMO/usr/koda/etude
+
+cd $dir
+make -f Makefile.nemo clean etude
+mv etude $NEMOBIN
+

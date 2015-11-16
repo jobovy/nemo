@@ -1,0 +1,109 @@
+.TH MKCOSMO 1NEMO "19 November 2006"
+.SH NAME
+mkcosmo \- create a cosmology cube of equal mass particles
+.SH SYNOPSIS
+\fBmkcosmo\fP [parameter=value]
+.SH DESCRIPTION
+From an input cube with given (relative) densities on a regular grid,
+initial conditions that correspond to the density variations at a given 
+redshift \fBz\fP (use \fBz=0\fP for non-comoving coordinates) are set
+based on 3 sweeps of cumulative mass computations along X, Y and Z.
+.PP
+Note that this routine will only work well in the linear regime when the fluctuations
+are very small, resulting in small perturbations from the central location in
+a cell. The code will warn when a particle falls outside the cell boundary,
+but otherwise happily allow that.
+.PP
+It is also possible to generate unequal mass particles, by assigning a single
+mass in each cell based on the local density, by using \fBdensit=t\fP. This
+could be useful if subsequent forces are used to initialize the velocities
+in a cosmological setting.
+.PP
+This program is currently under development, features change on an almost daily
+basis and the manual page can easily be out of sync with the program itself
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input density (fluctuation) cube. 
+No default
+.TP
+\fBout=\fP
+Output file name. 
+No default.
+.TP
+\fBz=\fP
+Redshift (for density correction). Only used if given, and if given
+the growth function is hardcoded as 1/(1+z). z=0 means no
+change made to densities. 
+Default: not used.
+.TP
+\fBD=\fP
+Growth function, by which the densities will be multiplied to get
+the density. Only used if given.
+Default: not used.
+.TP
+\fBa=\fP
+Additional rhob scaling?
+.TP
+\fBabsrho=\fP
+Is map absolute density or relative d(rho)/rho? [t]
+.TP
+\fBsigma=\fP
+Also perturb distances by (gaussian) sigma. This option is normally not
+used for cosmology. Default: 0
+.TP
+\fBseed=\fP
+Initial seed 
+[0]
+.TP
+\fBdensity=t|f\fP
+Use density map to make an exact lattice grid (under TEST). Typically
+one would then compute the forces, followed by setting the initial
+velocities based on the accellerations (see \fIsnap*vel(1NEMO)\fP).
+Default: f
+.TP
+\fBrejection=t|f\fP
+Use rejection technique to seed the 'grid'. This will generally result 
+in a very noisy distribution, unsuitable for cosmological initial conditions.
+.TP
+\fBnbody=\fP
+Use this number instead of NX*NY*NZ if rejection is used.  
+.TP
+\fBheadline=\fP
+Random verbiage added to output snapshot.
+.SH EXAMPLES
+Here's an example creating 1000 particles from a truely random gaussian field:
+.nf
+ccdmath "" - 'fie=rang(1,0.01)' size=10,10,10 | mkcosmo - snap1
+  ### nemo Debug info: Generating a map from scratch
+  ### nemo Debug info: MinMax = 0.969161 1.03211
+.fi
+Note this cube is not centered on 0,0,0 but instead one of the corners coincides with it.
+.PP
+Here is an example of using density based masses:
+.nf
+   mkcosmo ccd0 snap0 density=t ....
+   gyrfalcON snap0 snap1 give=mxva hmin=6 tstop=0
+   snapvel snap1 snap2 alpha=0.001432 ...
+.fi
+.SH CAVEATS
+The code assumes in a few places that the cube is really a cube with equal sizes in all
+3 dimensions. This is not always checked!
+.SH SEE ALSO
+mkcube(1NEMO), ccdmath(1NEMO), snapvel(1NEMO), image(5NEMO), snapshot(5NEMO)
+.PP
+grafics and cosmics (Ed Bertschinger's programs)
+.SH FILES
+src/nbody/init/mkcosmo.c	-- source
+.SH AUTHOR
+Peter Teuben, Ed Shaya, Alan Peel
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+1-Nov-06	V0.1 Created	Peter Teuben/Ed Shaya
+9-nov-06	V0.5 added rhob=, a=, rejection=, nbody=	PJT
+16-nov-06	V0.6 merged PJT and AP version			PJT
+17-nov-06	V0.6 added density= to play with		PJT
+.fi

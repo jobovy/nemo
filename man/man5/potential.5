@@ -1,0 +1,190 @@
+.TH POTENTIAL 5NEMO "19 July 2004"
+.SH NAME
+potential \- format for (flow) potential (and force field) description (functors)
+.SH SYNOPSIS
+.nf
+\fB #include <potential.>h
+ #include <potential_float.h>      /* optional */
+
+ typedef struct {
+    string name;
+    string pars;
+    string file;
+    struct a_potential *next;
+ } a_potential; \fP
+.PP
+.ta +3i
+\fBvoid inipotential (npar, par, name)\fP
+.B int *npar;      	/* number of parameters (I) */
+.B double par[];   	/* list of parameters (I/O) */
+.B char *name;     	/* optional (file) name for data (I) */
+.PP
+\fBvoid potential_double (ndim, pos, acc, pot, time)\fP
+.B const int *ndim;     	/* number of dimensions (I) */
+.B const double pos[];  	/* position (I) */
+.B double acc[], *pot;	/* forces and potential (O) */
+.B const double *time;        /* time (I) */
+.PP
+\fBvoid potential_float (ndim, pos, acc, pot, time)\fP
+.B const int *ndim;     	/* number of dimensions (I) */
+.B const float pos[];  	/* position (I) */
+.B float acc[], *pot;	/* forces and potential (O) */
+.B const float *time;        /* time (I) */
+.PP
+\fBinteger function  inipotential (npar, par, name)\fP
+.B integer npar
+.B double precision par(*)
+.B character name*(*)
+.PP
+\fBinteger function potential_double (ndim, pos, acc, pot, time)\fP
+.B integer ndim     
+.B double precision pos(*)
+.B double precision acc(*) 
+.B double precision pot
+.B double precision time
+.PP
+\fBinteger function potential_float (ndim, pos, acc, pot, time)\fP
+.B integer ndim     
+.B real pos(*)
+.B real acc(*) 
+.B real pot
+.B real time
+.fi
+.SH DESCRIPTION
+\fIpotential\fP is a convenient data structure to hold an
+ascii description of a user selected potential, and all it's
+descriptors (id-name, parameters, associated strings/file(s)). It
+is currently also stored in the \fIorbit(5NEMO)\fP data
+structure.
+.PP
+\fIpotential(5NEMO)\fP  is a 'filestructure' which 
+defines a potential (and force/density or velocity field) 
+through a standardized 
+interface routine, as described in \fIpotential(3NEMO)\fP.
+.PP
+A \fIpotential(5NEMO)\fP datafile \fBmust\fP
+have two (or three) externally accessible routines 
+\fBinipotential\fP and \fBpotential_double\fP and/or
+\fBpotential_flot\fP, (old name:\fBpotential\fP) with a 
+parameter sequence as described above. The parameters are all
+called by reference to allow interfaces with some common
+but more primitive languages. Notably FORTRAN is now
+supported in the BSD calling convention of parameters
+(see \fBpotentialf.c\fP).
+The first parameter, \fBpar[0]\fP in C, and \fBpar(1)\fP in
+fortran, is reserved for the pattern speed. User written potentials
+must take this into account. And return the pattern speed (or it's
+default) in that location. If another parameter describes the
+pattern speed (e.g. the lagrangian radius, as in \fIathan92\fP), 
+\fIinipotential\fP 
+must compute the pattern speed and return it in the first parameter.
+.SH EXAMPLES
+The following table lists the non-pattern speed parameters 
+for a few example potentials
+found in \fB$NEMOOBJ/potential\fP. \fINote: the pattern
+speed is not listed here\fP
+.ta +1.5i +1.5i
+.nf
+\fBharmonic\fP	wx,wy,wz	1,1,1
+\fBplummer\fP	m,a      	1,1
+\fBlog\fP  	mc,rc,q  	1,1,1
+\fBbar83\fP	fm,fx,ca	1.334697416,8.485281374,0.2
+\fBhackforce\fP	tol,eps,rsize,fcells	1,0.025,4,0.75
+\fBccd\fP	Iscale,Xcen,Ycen,Dx,Dy	1,0,0,1,1
+.fi
+A full listing, including their mathematical expression can be
+found in the NEMO manual, see also \fI$NEMO/text/manuals/potential.inc,\fP,
+and of course in \fI$NEMO/src/orbit/potential/data\fP.
+.SH BUGS
+Since the later introduction of a third character valued
+parameter in \fIinipotential()\fP
+a Fortran-to-C interface cannot be used in as portable a way as
+before. A small Fortran-to-C interface is however available, but
+is not guaranteed to work on all machines.
+Also keep in mind if you write your potentials in fortran:
+common blocks and other used routines get loaded into the
+executable, with the potential for duplicate symbol names.
+
+Most likely \fIloadobj(3NEMO)\fP will break under such circumstances.
+.PP
+Second: no I/O should be done. In practise this also means that
+this third parameter, \fBpotfile\fP, of \fIinipotential\fP cannot
+be used, as is mostly serves as a filename. The reason is that
+we didn't want the programs to have to link in huge fortran I/O
+libraries, including various portability problems. 
+.PP
+There is one exception: \fIpotlist(1NEMO)\fP is allowed to 
+load \fIpotential(5NEMO)\fP files with FORTRAN WRITE statements.
+After you have made sure the function works as you think, 
+these statements must be Commented out and can then be reloaded
+by most other potential/orbit programs.
+.SH FLOW POTENTIALS
+Experimental changes to the interface were implemented by the
+\fIflowcode(1NEMO)\fP and \fIvpotcode(1NEMO)\fP code. This
+requires special versions of potential desriptors, with the
+same calling convention but different meaning to the arguments:
+.PP
+\fBflowcode\fP uses a potential which returns the (currently 2-dimensional)
+velocities at the requested input position. These are returned in the
+\fBacc\fP slot. The \fBpot\fP has no meaning, though is used to
+represent densities in programs like \fImkflowdisk(1NEMO)\fP.
+.PP
+\fBvpotcode\fP uses a potential which expects the velocity to be 
+input in the \fBacc\fP slot, but the returned arguments
+(\fBacc\fP and \fBpot\fP) have the same meaning. This is to emulate
+(non-coriolis) forces which depend on velocity.
+.PP
+\fBmkflowdisk\fP initializes a 2D disk based on the flow velocities.
+.SH "MERIDIONAL PLANE IN AXISYMMETRIC POTENTIALS"
+A well known fact about meridional motion in an axisymmetric system
+is that their 3D motion is really a 2D motion in the R-z plane with
+an effective potential
+.nf
+                      L**2
+            Phi +    ------
+                     2 * R**2
+.fi
+but unlike motion in rotating potential this requires the authors of
+potentials to modify their code in something like the following:
+(pos[0] is R, pos[1] is z, pos[2] is not used)
+.nf
+    double tmp = sqr(ang_mom/pos[0]);
+    *pot += 0.5*tmp;
+    acc[0] += tmp / pos[0];
+.fi
+.SH "ENVIRONMENT"
+The environment variable \fBPOTPATH\fP can be used to search for potentials
+in other than the local directory. 
+.SH "CAVEAT"
+Since the old format did not use _float or _double, there will
+be some potentials with no _float support, since _double is the
+default if  not present in the symbol table. For C/C++ routines
+authors are recommended to either split their potential() in
+a potential_double() and potential_float(), or rename
+potential() to potential_double() and include <potential_float.h>
+(available for NEMO 3.2.2 and above) to have _float call 
+_double (the penalty for this is about 4%).
+.SH "SEE ALSO"
+get_potential(3NEMO), orbit(5NEMO), acceleration(5NEMO), manipulator(5NEMO), flowcode(1NEMO), mkflowdisk(1NEMO), vpotcode(1NEMO)
+.SH "AUTHOR"
+Peter Teuben
+.SH "FILES"
+.nf
+.ta +2.5i
+~/src/orbit/potential   potential.c, potential.h potentialf.c
+~/text/manuals      	potential.inc (latex description)
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +2.0i +2.0i
+13-Jul-87	V1.0: Original created	PJT
+8-Apr-88	V2.0: added parameter 'name' for hackforce	PJT
+13-Mar-89	V2.1: added 'name_len' in case fortran interface	PJT
+9-feb-90	V3.0: added time parameter to potential()	PJT
+24-may-92	V4.0: documented the new potential struct   PJT
+11-oct-93	V5.0: formalized get_pattern	PJT
+16-apr-96	documented 'flowcode' and 'vpotcode' deviations 	PJT
+19-sep-01	documented _float/_double                        	PJT
+19-nov-03	more flow documentation, added mkflowdisk	PJT
+19-jul-04	promote acceleration(5)  	PJT
+.fi

@@ -1,0 +1,82 @@
+.TH TABDMS 1NEMO "25 September 2013"
+.SH NAME
+tabdms \- Convert to HMS/DMS tables
+.SH SYNOPSIS
+\fBtabdms\fP [parameter=value]
+.SH DESCRIPTION
+\fBtabdms\fP replaces selected column(s) from a table to their
+HMS/DMS format. 
+.PP
+Currently the format is fixed.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+input file name, an ascii table. No Default.
+.TP 
+\fBout=\fP
+output file name, an ascii table. No Default.
+.TP 
+\fBtodms=\fP
+list of columns (1..) to convert to dms. 
+Negative columns should be used if the format is to be interpreted
+as ".DMS" instead of the default "D.MS". 
+The D ins DMS is normally assumed to be modulo 360.
+Default: none.
+.TP 
+\fBtohms=\fP
+list of columns (1..) to convert to hms.
+Negative columns should be used if the format is to be interpreted
+as ".HMS" instead of the default "H.MS".
+The H ins HMS is normally assumed to be modulo 24.
+Default: none.
+.TP 
+\fBfromhms=\fP
+A list of columns (1..) to convert from hms to degrees (or seconds)
+[none]
+.TP
+\fBfromhms=\fP
+A list of columns (1..) to convert from dms to seconds (or seconds)
+[none]
+.TP 
+\fBseparator=\fP
+separator between output D-M-S.S 
+[Default: \fB:\fP]
+.TP
+\fBformat=\fP
+Format statement for columns converted by fromhms= and fromdms=
+[Default: \fB%g\fP]
+.TP 
+\fBscale=\fP
+Scaling factor applied to degrees. If you want seconds, use 3600 here. For radians,
+use \fBpi/180\fP.
+[Default: \fB1\fP]
+.SH EXAMPLES
+The following example prints out the 4 possible ways to convert the
+number "12.51" to DMS or HMS:
+.nf
+% echo 11.51 11.51 11.51 11.51 11.51 | tabdms - - todms=1,-2 tohms=3,-4
+11:30:36.000 11:183:35:60.000 11:30:36.000 11:12:14:24.000 11.51 
+.fi
+Column 1 in .DMS, 2 as D.MS, 3 as .HMS, 4 as H.MS and 5 is the
+original column copied.
+.nf
+echo 12:00:00 12:00:00 | tabdms - - fromhms=1 fromdms=2
+12 180
+.fi
+.SH LIMITATIONS
+The code is compiled with a maximum number of columns, MAXCOL, typically
+256.
+.SH SEE ALSO
+tabmath(1NEMO), nemoinp(1NEMO), nemoinpx(3NEMO)
+.SH FILES
+src/kernel/tab/tabdms.c      source code
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+24-Jan-00	V0.4 doc written	PJT
+25-sep-13	V0.8 added fromdms=	PJT
+.fi

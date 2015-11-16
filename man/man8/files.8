@@ -1,0 +1,57 @@
+.TH FILES 8NEMO "6 July 2001"
+.SH NAME
+files \- summary of all special files, environment variables, programmers etc.
+.SH DESCRIPTION
+A number of files and environment variables are essential to certain
+operations in NEMO. They may sometimes conflict when a user has set 
+up various other software packages. See also Appendix G.2 in the 
+\fINEMO Users/Programmers Guide\fP.
+.PP
+Also listed are the shorthands sometimes used for some of the 
+known authors/contributors of NEMO software. They often go by cryptic
+three letter abreviations. The table here lists their full names.
+.PP
+Possible conflicts may occur when NEMO's cc-compiler (cc(1NEMO)) or
+make-shell script are used, or other packages happened to use the same
+environment variable for similar purposes.
+.SH "LIST OF FILES"
+.nf
+.ta +2.5i
+$NEMO/NEMORC          	standard startup file for everybody
+$NEMO/NEMORC.gen	template for NEMORC.local
+$NEMO/NEMORC.local	local additions of NEMORC go in here (\fIlocal\fP)
+$NEMO/nemo.rc       	yet another way to start up NEMO
+$NEMO/nemo_start	source this, and you're all set (\fIlocal\fP)
+$NEMO/nemo_end     	source this, to remove NEMO from the environment
+$NEMO/etc/motd      	message of the day (alias: motd) (\fIlocal\fP)
+.fi
+.SH "LIST OF ENVIRONMENT VARIABLES"
+.nf
+.ta +2.5i
+NEMO                      	top directory where NEMO resides.
+MANPATH                 	manual search path, should include $NEMO/man
+YAPPLIB                  	default graphics linking libraries
+HELP                        	default help level in initparam(3NEMO)
+DEBUG                        	default debug level in initparam(3NEMO)
+ERROR                    	default allowed error count in initparam(3NEMO)
+YAPP                        	default yapp device in initparam(3NEMO)
+BTRPATH                   	directory path for bodytrans(3NEMO) functions
+POTPATH                   	directory path for potential(3NEMO) functions
+CFLAGS                  	used by on-the-fly compilers
+.SH "LIST OF AUTHORS"
+See \fIauthors(5NEMO)\fP
+.SH "SEE ALSO"
+intro(1NEMO), \fIThe NEMO Users/Programmers Guide\fP
+.SH AUTHOR
+Peter Teuben
+.SH "UPDATE HISTORY"
+.nf
+.ta +2.0i ++4.0i
+16-Mar-87	created             	PJT
+ 8-Apr-87	new filestruct by JEB	PJT
+30-May-88	rewritten       	PJT
+13-Apr-92	long time due     	PJT
+15-jun-92	category is now 8	PJT
+14-aug-92	updated names      	PJT
+6-jul-01	removed authors, since this is in authors.5	PJT
+.fi

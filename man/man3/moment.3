@@ -1,0 +1,143 @@
+.TH MOMENT 3NEMO "16 January 2014"
+.SH NAME
+ini_moment, accum_moment, decr_moment, 
+reset_moment, show_moment, n_moment, sum_moment,
+mean_moment, sigma_moment, skewness_moment, kurtosis_moment, mad_moment, mard_moment, robust_moment,
+min_moment, max_moment \- various (moving) moment and minmax routines
+.SH SYNOPSIS
+.nf
+.B
+#include <moment.h>
+.PP
+.B void ini_moment(m, mom, ndat)
+.B void accum_moment(m, x, w)
+.B void decr_moment(m, x, w)
+.B void reset_moment(m)
+.PP
+.B real show_moment(m, mom)
+.B int n_moment(m)
+.B real sum_moment(m)
+.B real mean_moment(m)
+.B real median_moment(m)
+.B real sigma_moment(m)
+.B real skewness_moment(m)
+.B real kurtosis_moment(m)
+.B real h3_moment(m)
+.B real h4_moment(m)
+.B real mad_moment(m)
+.B real mard_moment(m)
+.PP
+.B real min_moment(m);
+.B real max_moment(m);
+.PP
+.B void compute_robust_moment(m);
+.B int n_robust_moment(m);
+.B real mean_robust_moment(m);
+.B real median_robust_moment(m);
+.B real sigma_robust_moment(m);
+.PP
+.B Moment *m;
+.B int mom, ndat;
+.B real x, w;
+.fi
+.SH DESCRIPTION
+\fImoment\fP is a set of functions to compute the moments of 
+a set of real values, but also keep track of the datamin
+and datamax. The routines are written in C but in 
+an object-oriented fashion as to try and keep the use from the internal
+data-structures. The \fBMoment\fP can (and should) be treated as an
+opaque datastructure. All information should be obtained through the
+interface routines described below.
+.PP
+If only a datamin/max is needed, setting \fBmom<0\fP can be used to prevent
+the more expensive moment calculations. 
+.PP
+Moving or running averages (or moments) can be done by supplying \fBndat>0\fP
+to ini_moment. It will keep a memory of the last \fBndat\fP data values
+and the moments now become running moments.
+.PP
+Note that the \fImedian_moment\fP can only be used in \fBx\fP (the weights are
+ignored) and moving moment where \fBndat>0\fP.
+.PP
+\fBmean_moment\fP returns the mean value, where \fBsigma_moment\fP returns
+the square root of the variance
+.PP
+\fBrobust_moment's\fP can also be computed. These are based on an algorithm to
+remove the outliers. It first computes the distance between the 1st and 3rd quartile,
+then removes all points further than 1.5 times that distance from the 1st and 
+3rd quartile. After calling \fBcompute_robust_moment\fP, the mean, median and
+sigma can be retrieved as those computations are done in a temporary Moment
+structure. Caveat: for large datasets and/or moving moments, 
+robust_moment's can become expensive because of the need for sorting to
+get the quartiles.
+.PP
+\fBmad_moment\fP computes the Median Absolute Deviation (MAD), arguably a better
+measure for the Standard Deviation. As with the robust moments, it needs to
+keep a copy of the data available. MAD is formally RMS/1.4826.  Related is
+\fBmard_moment\fP, the Mean Absolute Relative Difference (MARD).
+.Sh EXAMPLES
+The following code computes a weighted mean and dispersion of a set of points:
+.nf
+
+    real x[100], w[100];
+    int  i,n=100;
+    Moment m;
+    ...
+    ini_moment(&m,2,0);      /* up to 2nd order moment, and using no circular buffer */
+    for (i=0; i<n; i)
+	accum_moment(&m,x[i],w[i]);
+    printf("Mean: %g   Dispersion: %g\\n",
+	mean_moment(&m), sigma_moment(&m));
+    compute_robust_moment(&m);
+    printf("Robust Mean: %g   Dispersion: %g\\n",
+	robust_mean_moment(&m), robust_sigma_moment(&m));
+
+.fi
+.SH MOMENT STRUCTURE
+A simple data structure (referred to as \fImoment\fP in the above
+SYNOPSIS) is used to communicate between different routines:
+.nf
+.ta +0.3i +1.5i
+
+typedef struct { 
+	int mom;
+	int n;
+	real *sum;
+	real datamin, datamax;
+
+	int ndat;
+	int idat;
+	real *dat;
+	real *sum;
+} Moment;
+
+.fi
+from the standard include file \fImoment.h\fP.
+.SH BUGS
+When \fIdecr_moment\fP is used, the data min/max is not correct. 
+Only with \fBndat>0\fP for moving moments can it be recomputed
+correctly.
+.SH SEE ALSO
+grid(3NEMO)
+.nf
+http://apophenia.info
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +1.5i
+~/src/kernel/misc	moment.c
+.fi
+.SH UPDATE HISTORY
+.nf
+.ta +1i +4i
+30-oct-93	Created   	PJT
+8-nov-93	fixed init bug 	PJT
+13-jun-95	added decr_moment	PJT
+2-feb-05	added moving moments	PJT
+2-mar-11	added h3,h4	PJT
+24-apr-13	documented robust statistics	PJT
+16-jan-14	added MAD	PJT
+11-jun-14	clarified MAD and MARD (the old MAD was really MARD)	PJT
+.fi

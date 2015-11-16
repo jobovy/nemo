@@ -1,0 +1,48 @@
+#! /bin/csh
+#
+
+# remove $FALCONBIN from PATH
+if ($?FALCONBIN) then
+  set tmp=()
+  foreach p ($path)
+    if ($p != $FALCONBIN) then
+      set tmp=($tmp $p)
+    endif
+  end
+  set path=($tmp)
+  rehash
+  echo "$FALCONBIN removed from search path"
+endif
+
+# remove $WDUTILSLIB from LD_LIBRARY_PATH and DYLD_LIBRARY_PATH
+if ($?WDUTILSLIB) then
+  setenv   LD_LIBRARY_PATH `echo $LD_LIBRARY_PATH | perl -pe "s[$WDUTILSLIB][]g;"`
+  if ($?DYLD_LIBRARY_PATH) then
+    setenv DYLD_LIBRARY_PATH `echo $DYLD_LIBRARY_PATH | perl -pe "s[$WDUTILSLIB][]g;"`
+  endif
+endif
+
+# remove $FALCONLIB from LD_LIBRARY_PATH and DYLD_LIBRARY_PATH
+if ($?FALCONLIB) then
+  setenv LD_LIBRARY_PATH `echo $LD_LIBRARY_PATH | perl -pe "s[$FALCONLIB][]g;"`
+  if ($?DYLD_LIBRARY_PATH) then
+    setenv DYLD_LIBRARY_PATH `echo $DYLD_LIBRARY_PATH | perl -pe "s[$FALCONLIB][]g;"`
+  endif
+endif
+
+# remove all FALCON related enviroment variables
+unsetenv FALCONLIB
+unsetenv FALCONBIN
+unsetenv FALCON
+if ($?FALCONACC) then
+  unsetenv ACCPATH
+  unsetenv FALCONACC
+endif
+if ($?FALCONMAN) then
+  unsetenv MANIPPATH
+  unsetenv FALCONMAN
+endif
+
+unalias NOclaf
+
+# end

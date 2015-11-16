@@ -1,0 +1,163 @@
+.TH GADGETSNAP 1NEMO "5 July 2006"
+.SH NAME
+gadgetsnap \- convert gadget files to snapshot format
+.SH SYNOPSIS
+\fBgadgetsnap\fP [parameter=value]
+.SH DESCRIPTION
+\fBgadgetsnap\fP converts  data from \fIgadget(lNEMO)\fP into
+standard \fIsnapshot(5NEMO)\fP format. Currently limited
+to only output \fImass,pos,vel\fP and all of the
+potentially 5 particles typed are stacked in the order of how
+GADGET has stored them.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input file (gadget format). No default, and currently only one file
+at the time can be processed.
+.TP 
+\fBout=\fP
+Output file (snapshot format). No default.
+.TP 
+\fBswap=\fP
+Force swaping bytes for other-endian machines [f] 
+.TP 
+\fBheader=|4|8\fP
+Size of the header uses in unformatted fortran data. This used to be 4,
+but modern compilers (e.g. gfortran) may very well use 8. By default it
+is not specified, and the value determined to be the correct one during
+install (UNFIO_HDR_SIZE) is used. This keyword can thus be used to force
+another value.
+.SH EXAMPLES
+The following example converts a standard sample dataset \fIlcdm_gas.dat\fP
+from the directory \fB$GADGET_DIR/ICs\fP to a NEMO snapshot file,
+and piped into \fItsf(1NEMO)\fP for a quick look:
+.nf
+% gadgetsnap lcdm_gas.dat - swap=t | tsf -
+reading `lcdm_gas.dat.intel' ...
+Header:
+npart:  32768 32768 0 0 0 0
+mass:  4.23508 27.528 0 0 0 0
+time: 0.0909091
+redshift: 10
+flag_sfr: 0
+flag_feedback: 0
+npartTotal:  32768 32768 0 0 0 0
+flag_cooling: 424242
+num_files: 0
+BoxSize: 0
+Omega0: 0
+OmegaLambda: 0
+HubbleParam: 0
+char History[44] "gadgetsnap lcdm_gas.dat.intel - VERSION=0.1"
+set SnapShot
+  set Parameters
+    int Nobj 65536
+    double Time 0.0909091
+  tes
+  set Particles
+    int CoordSystem 66306
+    double Mass[65536] 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508
+      4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508
+      4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508
+      4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508 4.23508
+      . . .
+    double PhaseSpace[65536][2][3] 395.234 395.752 1244.31 -232.532
+      -232.220 278.943 310.173 440.217 2817.06 -283.772 -205.434
+      285.119 191.957 465.572 4430.20 -354.984 -190.161 315.622
+      71.5493 452.081 6047.62 -427.516 -198.288 348.702 72.7101
+      . . .
+  tes
+tes
+
+
+new Gadget-2 example
+
+% gadgetsnap snapshot_000 - header=4 | tsf -
+reading `snapshot_000' ...
+Header:
+npart:  0 40000 20000 0 0 0
+mass:  0 0.00104634 0.00023252 0 0 0
+time: 0
+redshift: 0
+flag_sfr: 0
+flag_feedback: 0
+npartTotal:  0 40000 20000 0 0 0
+flag_cooling: 0
+num_files: 1
+BoxSize: 0
+Omega0: 0
+OmegaLambda: 0
+HubbleParam: 1
+char History[47] "gadgetsnap snapshot_000 - header=4 VERSION=0.2"
+set SnapShot
+  set Parameters
+    int Nobj 60000
+    double Time 0.00000
+  tes
+  set Particles
+    int CoordSystem 66306
+    double Mass[60000] 0.00104634 0.00104634 0.00104634 0.00104634
+      0.00104634 0.00104634 0.00104634 0.00104634 0.00104634
+      0.00104634 0.00104634 0.00104634 0.00104634 0.00104634
+      0.00104634 0.00104634 0.00104634 0.00104634 0.00104634
+      . . .
+    double PhaseSpace[60000][2][3] -94.1339 -10.2409 -7.94287 8.42407
+      -51.3595 -13.0237 -97.9120 -25.4377 0.708142 -75.8381 113.303
+      -16.6230 -59.3715 -23.9488 -33.6642 15.1963 84.9828 11.2808
+      -109.889 -14.8212 -20.2457 47.3136 102.704 106.783 -54.4458
+      . . .
+  tes
+tes
+
+.fi
+.SH HEADER
+The 256 byte GADGET header contains information on how the subsequent data
+is structured:
+.PP
+Npart(6): number of particles in each of up to 5 particle types (6th one is unused)
+.PP
+Mass(6): mass of a single particle in the particle types. If a particle type has
+varying masses, the entry will contain 0.0
+.PP
+Time/a: expansion factor of output (for cosmological) or time of output
+(for non-cosmological)
+.PP
+Redshift: z = 1/a-1 (only set for cosmological)
+.PP
+FlagSfr: flag for starformation (not used in the public release)
+.PP
+FLagFeedback: flag for feedback (not used in the public release)
+.PP
+Nall(6): total number of particles of each type in the simulation. This
+field differs from Npart if the particle dump is distributed accross
+several files
+.PP
+FlagCooling
+.PP
+NumFiles
+.PP
+BoxSize
+.PP
+Omega0
+.PP
+OmegaLambda
+.PP
+HubbleParam
+.SH CAVEAT
+There is an option to run gadget in double precision mode, their output files 
+may not be compatible with this version of the program.
+.SH SEE ALSO
+snapgadget(1NEMO), gadget2nemo(1NEMO), nemo2gadget(1NEMO), uns2uns(1NEMO), snapshot(5NEMO)
+.PP
+http://www.mpa-garching.mpg.de/gadget/
+.SH FILES
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+02-Jun-03	V0.1 Created for Gadget-1	PJT
+17-mar-06	V0.2 various fixes for Gadget-2	PJT
+.fi

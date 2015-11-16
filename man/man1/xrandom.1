@@ -1,0 +1,144 @@
+.TH XRANDOM 1NEMO "9 October 2012"
+.SH NAME
+xrandom \- Return seed for random numbers and optionally random numbers
+.SH SYNOPSIS
+\fBxrandom\fP [parameter=value]
+.SH DESCRIPTION
+\fBxrandom\fP returns a seed that can be used to random number generators,
+and optionally random numbers drawn from a uniform or gaussian (normal)
+distribution. Uniform numbers are between 0 and 1, gaussian numbers 
+have a mean of 0 and a dispersion of 1. 
+.PP
+If compiled with GSL, random number generator types 
+can be selected, as well as many more distribution types.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBseed=\fP
+Initial seed. Use 0 for the current time (seconds since 1970.00,
+see also \fItime(2)\fP)
+-1 for the number of centiseconds since boot (see \fItimes(2)\fP) 
+and 2 for the current pid (see \fIgetpid(2)\fP).  If GSL is implemented
+the seed value can be optionally followed by the random number 
+generator type (default: mt19937). See \fIxrandom(3)\fP for more
+details.
+\fBn=\fP
+Number of random numbers to draw 
+[Default: 0].
+.TP
+\fBm=\fP
+Number of times to repeat the experiment. If more than 1, tabulating
+is turned off, and reporting is now doine at the end of all tests,
+and the statistics of the mean's from each \fBn\fP sample is shown.
+[Default: 1].
+.TP
+\fBgauss=\fP
+Return gaussian numbers instead of uniform?
+[Default: f]
+.TP
+\fBreport=\fP
+Report mean/dispersion/skewness/kurtosis? 
+[Default: f]
+.TP
+\fBtab=t|f\fP
+Tabulate all random numbers [t]
+.TP
+\fBoffset=\fP
+Offset of distribution from 0. Default: 0.0
+.TP
+\fBgsl=\fP
+Name of the random number distribution requested. They follow the name convention
+of the same-name functions \fIgsl_random_xxx\fP in the \fIgsl(3)\fP library.
+No default.
+.TP
+\fBpars=\fP
+Parameters belonging to the selected \fBgsl\fP name. They need to match
+exactly (0, 1, 2 or 3 currently). No default.
+.SH EXAMPLES
+Here is an example script, \fBgrandom.csh\fP, 
+to test if the error in the mean scales
+as 1/sqrt(N):
+.nf
+
+#! /bin/csh -f
+#
+#       n1: sample size 
+#       n2: number of times to do the experiment
+
+set n1=100
+set n2=100
+foreach i (`nemoinp 1:$n2`)
+  set log=(`xrandom -1 100 t | tail +2 | tabhist - tab=t |& grep ^Mean`)
+  echo $log[5]
+end
+
+.fi
+This script outputs \fBn2\fP numbers, of which the mean should be 0 and the
+dispersion (now the error in the mean) 1/sqrt(n2), where 0 and 1 are the
+mean and dispersion of a random gaussian number from \fIgrandom(3NEMO)\fP:
+.nf
+
+       % grandom.csh | tabhist -
+100 values read
+min and max value in column 1: [-0.335527 : 0.348629]
+Number of points     : 100
+Mean and dispersion  : 0.0120416 0.102367
+Skewness and kurtosis: -0.0528344 1.19066
+Median               : 0.000425562
+
+.fi
+.SH GSL
+If the GNU Scientific Library (GSL) has been enabled during installation, the
+\fBgsl=\fP and \fBpars\fP keyword will appear in the keyword list of xrandom.
+The following random number distribution names are implemented, 
+and the names of their parameters. Note that
+the number of parameters, as given in \fBpars=\fP has to match exactly,  there are no
+defaults.
+.nf
+gaussian               sigma
+gaussian_ratio_method  sigma
+gaussian_tail          a sigma
+exponential            mu
+laplace                a
+exppow                 a b
+cauchy                 a
+rayleigh               sigma
+rayleigh_tail          a sigma
+landau                 N/A   
+levy                   c alpha
+levy_skey              c alpha beta
+gamma                  a b
+flat                   a b
+lognormal              zeta sigma
+chisq                  nu
+fdist                  nu1 nu2
+tdist                  nu
+beta                   a b
+logistic               a
+pareto                 a b
+weibull                a b
+gumbel1                a b
+gumbel2                a b
+.fi
+The following functions are discrete random number distributions, and return integers:
+.nf
+poisson                mu
+bernoulli              p
+binomial               p n
+negative_binomial      p n
+pascal                 p k
+geometric              p
+hypergeometric         n1 n2 nt
+logarithmic            sigma
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+26-Nov-96	V1.0 turned TESTBED into a TOOLBOX program	PJT
+13-apr-97	example
+8-sep-01	V2.0 GSL optionally added	PJT
+9-oct-2012	V2.2 added m=	PJT
+.fi

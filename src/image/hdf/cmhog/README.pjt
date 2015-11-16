@@ -1,0 +1,24 @@
+Utilities for the cmhog program; you really should be in touch with the
+author before using these. The old/original copy lives/d in 
+$NEMO/usr/pjt/cmhog, and has been moved here in the 2.5.3 release
+(January 5, 2000).
+
+The actual released code is available as a module 'cmhog2' under the
+same CVS server where you obtained NEMO from. Please be in touch with
+the author(s), as this code differs from the original 'cmhog' 1995 
+version, which probably have not been well documented.
+
+In December 2004 we've cloned hdfgrid to hdfwedge, for using polar
+grid-like ZEUS files (they also use rank=3 with an NZ=1 axis).
+
+	peter
+Makefile
+README.pjt
+cmhog.sm		SM example macro to plot output of cmhog
+hdf100bg		example HDF file from CMHOG project
+hdfall.src		original fortran code
+hdfgrid.1		man page, now located $NEMO/man/man1
+hdfgrid.c		
+runcmhog.1
+runcmhog.c		interesting wrapper program
+sdsmath.c		- unfinished software -

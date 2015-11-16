@@ -1,0 +1,23 @@
+DIR = src/nbody/cores
+BIN = bodytrans
+NEED = $(BIN)
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+
+all:	$(BIN)
+
+bodytrans:
+	@echo Running $@
+	$(EXEC) bodytrans x; nemo.coverage bodytrans.c
+	$(EXEC) bodytrans y; $(EXEC) bodytrans z; $(EXEC) bodytrans r; 
+	$(EXEC) bodytrans 'sqrt(x*x+y*y)>0' int
+	$(EXEC) bodytrans 'sqrt(x*x+y*y)>1' int
+	$(EXEC) bodytrans 'sqrt(x*x+y*y)>2' int
+

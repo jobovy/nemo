@@ -1,0 +1,375 @@
+  - a new CVS branch is dealing with a better definition of		
+    images, basically doing FORDEF instead of CDEF.
+    CDEF has always been a bad idea...
+
+  - objects > 2GB or 4GB have issues, since allocate() deals 
+    with int, not size_t. That's being addressed in 3.2.5
+    (May 2007)
+
+MacOSX problems: (a special macosx.html web page dedicated to this)
+    See:     http://bima.astro.umd.edu/nemo/macosx.html
+  - configure leaves -lcrt.o etc. in, so they need manual removal
+    from makedefs and NEMORC.gen before continuing on
+    Also check http://www.astro.gla.ac.uk/users/norman/note/2004/restFP/
+    ** most of this should be solved with the jan-2013 changes to
+       configure. I get a clean install on mac 10.8, 
+
+  - see also:
+    http://www.fortran-2000.com/ArnaudRecipes/sharedlib.html
+
+  - src/nbody/evolve/aarseth/nbody0/Makefile
+	need to activate F77LIBS to include -lcc_dynamic (10.3 ?)
+        but sometimes you to take it out again...... (10.4 ?)
+
+  - directcode doesn't compile since it was derived from an earlier
+    release of hackcode1 with the multiple externs included by the
+    linker
+
+  - xyzview is too slow to be useful, we should recode it such that
+    OpenGL (and thus Mesa) can be linked. This would also remove the
+    immediate need for vogl.
+    try JCL's new program 'glnemo' instead, it's far superior.
+
+  - one case had gcc in /usr/bin but g77 in /usr/local/bin, and not in
+    the path -> pgplot didn't get build.
+
+  - the sitation with compilers can be painful. Always make sure you
+    have the correct Xcode installed, and then choose:
+
+	- /usr/local/bin      from hpc.sourceforge.com
+	- /sw/bin             fink
+	- /opt/local/bin      darwinports
+
+    For most of them you will either need to set your $PATH correctly and/or
+    setenv CC, CXX and F77 to the full path of the compilers.
+
+GCC4 problems: (as tested on FC3/FC4)
+  - pgplot: needs a gfortran_gcc4.conf file for now
+	also:  no more -fno-backslash
+	also:  %VAL() does not seem to be supported anymore ???
+	also:  some formatted reading that spans multi lines BAD (pgpack.f)
+  - no more -fno-globals for fortran
+  - no more -fwritable-strings in C
+  - -fno-globals
+  - g95 vs. gfortran, use the new m4 macros
+  - the linker is now more conservative, removing references to code
+    that is never used. get_atable and sqr come out in some tests
+    as missing...
+    The flag
+		-fno-unit-at-a-time
+    might work for a little bit.
+  - see also:
+	http://www.kegel.com/gcc/gcc4.html
+        http://womble.decadentplace.org.uk/c++/syntax-errors.html
+
+-------------------------------------------------------------------------------
+
+general things for 3.2.x
+  - make sure cfitsio stuff is ok in configure (THIS IS BROKEN NOW)
+  - the change in get_atable() should mean routines need to work
+    on buffered table read better
+  - ccdmath WCS is broken
+  - fix installation if no fortran is available
+	(fmath in potential not needed)
+	(some potential/data not needed)
+  - intel linker problems (use different technique to force loading?)
+	e.g. intel says to use
+	export GXX_ROOT=/usr/i686-pc-linux-gnu/gcc-bin/3.3/"
+	if compilers are in non-standard locations, and
+	export LC_ALL=C
+	if you're working on a non-english linux OS
+  - get a mini-NEMO going (Dehnen, BIMA/CARMA)
+  * remove environment variables from NEMORC.local that are needed in Makefiles
+    and move them into makedefs
+  - use some kind of global MAXBODY where we often use different values
+	**mostly done**
+
+  - gyrfalcON: still has some compiler dependant problems, is also hardcoded for
+    the GNU compiler (g++) and assumes Linux tools. Not mac friendly, though
+    a patch exists now.
+
+     The new version (V3.0.5; 22-mar-2006) has the one between []
+     On intel architecture:
+	
+	3.2.2	ok   [ok]
+
+	3.3.2	ok
+	3.3.4	ok   [ok]
+	3.3.6	ok
+
+	3.4.1   fail
+	3.4.2	fail 	non-constant `(Ky + M2)' cannot be used as template argument
+	3.4.3	ok   [ok]
+	3.4.5	ok
+
+	4.0.0	ok   [ok]
+	4.0.2	ok
+
+	4.1.0	fail  [fail]  falcON::fieldset::fieldset(falcON::fieldbit)
+                      might need to remove -ffast-math if you get segfaults
+	4.1.1   ok
+ 	4.1.2   ok
+
+     For MacOSX a bit more work is needed, since isnan() and isinf() are not known?
+	add:	-Wno-long-double
+	remove:	-rdynamic
+     On my 10.3.9:
+	gcc3    3.1 20021003 (build 1256)                   -- isinf/isnan  problem
+	gcc ->  3.3 20030304 (Apple Computer, build 1495)   -- isinf/isnan  problem
+     On somebody's 10.4.5:
+	gcc -> 4.0.0 (build 4061)			    template problem??
+	gcc-3.3 -> build 1809				    ok
+
+
+     On solaris  mkdir is called with --parents and --mode=
+		 they need to be -p -m $(PUBLICMODE)
+                 and solaris flags to figure out
+
+     Also:
+	inc/tupel.cc:51: error: `std::isinf' has not been declared
+	inc/tupel.cc:52: error: `std::isnan' has not been declared
+
+     On mac as well as solaris: what's the way to enable STATIC compile,
+	since the default is dynamic and doesn't work well on sun4 and darwin?
+     doxygen may be absent, so you may need to use "make -i" instead
+
+
+ - need a gyrfalcON testsuite section
+
+-  falcON/utils install uses some linux dialect:
+
+   1) mkdir
+	mkdir --parents --mode=755 ...
+      on the mac this should be
+	mkdir -p -m 755 ....
+   2) linking:  -rdynamic, -shared, -rpath  are not understood
+	g++ .... -shared -o XXX.so
+
+	Walter uses:
+	-shared -o lib/libWDutils.so -march=i386 -mpreferred-stack-boundary=4
+	OSX/intel can use:
+
+
+	gcc -c -fno-common testlib.c
+	NO:  gcc -dylib -flat_namespace -undefined suppress -o libtestlib.dylib testlib.o
+	YES: gcc -dynamiclib -o libtest.dylib -dylib t.o
+
+   on some (linux) distributions you may need to have to edit the
+	utils/make.gcc file (remove -march=native from OPTFLAGS :=), and edit
+	falcON/makedefs (remove -Wtype-limits from WARNINGS :=)
+	
+
+ - a few snapshot I/O programs still use the old I/O, hence Position/Velocity data is 
+   now difficult to make global.
+
+
+--------------------------------------------------------------------------------
+
+some other help on configure:
+	http://www.airs.com/ian/configure/
+	
+code & line coverage: (gcov, lcov)
+  http://ltp.sourceforge.net/coverage/lcov.php
+  
+- io_nemo library written by JCL in Marseille
+	has problems in -DSINGLEPREC
+	problems with intel compiler
+
+- use cfortran?  cfitsio also uses it.
+
+- gyrfalcON uses potentials in such a way that only potential_float
+  is looked for ???
+
+- install on solaris is broken:				[fixed w/ gcc, cc/f77 minor patch needed]
+
+  for native (cc/CC/f77) compilers, use:
+	- FORLIBS needs the 
+	  -R /opt/SUNWspro/lib -L/opt/SUNWspro/lib -lF77 -lM77 -lV77 -lsunmath 
+	  type solution for pgplot, and if so,
+	- FORLIBS need to be added to YAPPLIB
+  Also:
+	- sun's make (e.g. the one in /usr/ccs/bin/make) doesn't work, we need gmake (GnuMake)
+
+- compile under cygwin
+    - macro usage of some math function?  real rlog2(real); 
+
+- fix problems when replacing gnu make with pmake
+
+- fix for pgplot  when libpng is needed, or tcl/tk for that matter....
+	**done; pgn=0 or 1 is now a keyword, --enable-png is allowed and used**
+
+- unsio (and possibly a few more modules) won't link if e.g. pgplot was enabled
+  with png. are some interfaces not cleanly separated?  maybe via yapp_pgplot ?
+
+- if the code has to be C++ friendly, i.e. the nemo_main() be compiled
+  by c++, but the rest with CC,  all extern's must be wrapped in
+
+
+  #if defined(__cplusplus)
+  extern "C" {
+  #endif
+  ...
+  #if defined(__cplusplus)
+  }
+  #endif
+
+- getparam:  an option to produce an iraf .par file?
+
+- getparam:  finish the outkeys= stuff
+
+- zeno: some more Zeno compatibility
+
+- overal design:
+  separation of functionality and data format. E.g. to compute the 
+  statistics of a variable in either a table, a snapshot or an image
+  should have the same set of keywords that control the statistics.
+  Yet accessing the data is different. This is done rather sloppy
+  and slightly different in different places.
+
+- fortran-to-C
+   some fortran compilers need -nofor_main to prevent main getting
+   linked in from the fortran library
+   
+   some linkers want to link with gcc, not g77 or vice versa? This
+   may require a configure macro in the makefiles
+
+- still various problems in -DSINGLEPREC mode:
+
+	- nemo_io
+	- rotcur/rotcurshape: cube1/cube1.sig appears to create some NaN pixels
+	- mkommod has problems with out of bounds intervals
+	- hackdens doesn't compile
+
+- configure should use more consistent use of the
+	--with-xxx-yyy=DIR
+  where xxx is any of e.g. x11,tk,tcl,,.... libaries
+  and yyy is either dir    if it specifies -I DIR/ionclude -L DIR/lib
+	        include    if it specifies -I DIR
+		    lib    if it specifies -L DIR
+
+
+- alternatives to autoconf?  
+	Pre Make Kit  = http://pmk.sourceforge.net/
+	Cmake (KDE uses it)
+  also check the Autoconf Macro Archive: http://autoconf-archive.cryp.to/
+ 
+- Testfile's:    also needs a program to be added to the local Makefile,
+	as well as in the list of programs to be installed...
+	that's non-intuitive
+
+- man pages vs. doxygen; especially the introduction of C++ is showing 
+  the aging of man pages. should we switch to doxygen.
+
+- solaris10 on intel: (sep 2005)
+
+  choose CC,CXX,F77 =>  /opt/SUNWspro/bin/{cc,CC,f77}	      Sun Studio 10: C 5.7 compiler
+	or:             /opt/sfw/gcc-3/bin/{gcc,g++,g77}      GNU 3.4.0
+
+  Need to patch your env before installing:
+
+	make -> gmake			/usr/ccs/bin/make is the default and not GNU
+				ln -s /opt/sfw/bin/gmake make
+	whoami -> who am i    (e.g. use shell script "
+
+
+setenv CC  /opt/SUNWspro/bin/cc
+setenv CCX /opt/SUNWspro/bin/CC
+setenv F77 /opt/SUNWspro/bin/f77
+
+or
+setenv CC  /opt/sfw/gcc-3/bin/gcc
+setenv CCX /opt/sfw/gcc-3/bin/g++
+setenv F77 /opt/sfw/gcc-3/bin/g77
+
+	
+	Problem:   loadobj doesn't work, testloadobj doesn't find dprintf
+
+Linking:
+--------
+
+Linking can be done with ld, or with the compiler. But which compiler?
+Should it be the one main() is written in, i.e. gcc for C programs,
+and gfortran/g77 for PROGRAM's ?
+The FLIBS macro from autoconf defines a bunch of -L..... -lg2c (-lgfortran)
+The example where this linking got problematic is the mkkd95 tools.
+    mknemo  mkkd95
+shows the complexity in failure and success.
+
+
+
+Intel compiler 9.0 (sep 2005):
+------------------------------
+
+- some warnings in the Tk drivers
+
+- a number of these linking problems (e.g. cpgdemo's, but also libpgplot.so)
+  show up when multiple .o files are combined in an executable.
+
+IPO link: can not find "("
+icc: error: problem during multi-file optimization compilation (code 1)
+make[1]: [libpgplot.so] Error 1 (ignored)
+
+
+=
+
+building shared vs. static:
+
+gfortran -shared -O2 *.f -o libfoo.so -fPIC
+
+gfortran -O2 -c *.f; ar cr libfoo.a *.o
+
+optimize with:   -mtune=pentium4 or -ffast-math
+
+DYLD_LIBRARY_PATH (osx) vs. -rpath-link (linux) vs. LD_LIBRARY_PATH
+
+
+==  
+
+on mac a few minor issues w/ gyrfalcON:
+ - inc/public/forces.cc:462: error: 'uint' has not been declared
+   uint must be unsigned
+
+ - src/public/lib/sample.cc:146: error: no matching function for call to 'isnan(double&)'
+   should be std::isnan()
+
+ - /usr/include/rpc/xdr.h:153: error: conflicting declaration 'typedef struct __rpc_xdr XDR'
+   need to #include <rpc/rpc.h> here
+
+    
+
+	YES: gcc -dynamiclib -o libtest.dylib -dylib t.o
+
+
+$(LIB)lib$(LIBNAME).so: $(falcON_objs)
+                        $(CXX) $^ -shared -o $@
+
+becomes:
+
+
+bad is:
+
+g++ lib/basic.o lib/body.o lib/tree.o lib/gravity.o lib/kernel.o lib/io.o lib/partner.o lib/nbody.o lib/forcesC.o lib/tools.o lib/sample.o lib/manip.o lib/profile.o lib/bodyfunc.o lib/neighbours.o lib/PotExp.o -dynamiclib -o lib/libfalcON.dylib
+
+
+and in utils/Makefile
+
+$(LIB)libWDutils.so:    $(LIB)libWDutils.dylib
+
+$(LIB)libWDutils.dylib: $(WDutils_objs)
+                        $(CXX) $^ -dynamiclib -o $@ $(CPUFLAGS)
+
+
+	 few more isnan() and isinf()  fixes  wiht std::
+
+- old style diff and patch
+    diff  file.old  file.new > file.patch
+    patch file.old -i file.patch -o file.new
+    
+diff brent.for brent_dbl.f > test/brent.patch
+cd test
+cp ../brent.for .
+patch brent.for -i brent.patch -o brent_dbl.f
+
+diff brent.for ..
+diff brent_dbl.f ..
+

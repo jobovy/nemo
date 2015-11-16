@@ -1,0 +1,38 @@
+# setup manybody environment for sh
+# $Id: manybody_start.sh.in,v 1.4 2006/08/02 15:38:35 pteuben Exp $
+
+# you really should hardcode your address in here
+export MANYBODY=`pwd`
+export MANYBODY=@MANYBODY@
+
+export NEMO=$MANYBODY/nemo_cvs
+export STARLAB=$MANYBODY/starlab_cvs
+export ACSROOT=$MANYBODY/acs
+
+# check for existence
+if [ -e $NEMO/nemo_start.sh ]
+then
+  source $NEMO/nemo_start.sh
+else
+  echo Warning: no NEMO present
+fi
+
+if [ -e $STARLAB/starlab_start.sh ]
+then
+  source $STARLAB/starlab_start.sh
+else
+  echo Warning: no STARLAB present
+fi
+
+PATH=$MANYBODY/opt/bin:$PATH
+# check if exists
+if [ -z "$LD_LIBRARY_PATH" ]
+  LD_LIBRARY_PATH=$MANYBODY/opt/lib:$LD_LIBRARY_PATH
+else
+  LD_LIBRARY_PATH=$MANYBODY/opt/lib
+fi
+# compilers
+
+export CC=@CC@
+export CXX=@CXX@
+export F77=@F77@

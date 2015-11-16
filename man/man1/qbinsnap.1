@@ -1,0 +1,49 @@
+.TH QBINSNAP 1NEMO "26 June 2012"
+.SH NAME
+qbinsnap \- convert binary files to snapshot
+.SH SYNOPSIS
+\fBqbinsnap\fP [parameter=value]
+.SH DESCRIPTION
+No description available. This manual page was created by mkman
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input rvc file [???]    
+.TP 20
+\fBout=\fP
+Output snapshot file [???]    
+.TP 20
+\fBnbody=\fP
+Number of bodies . If you leave this at 0, it will be computed from Np*np*np (see below).
+Otherwise just left to test if you want a small snapshot.
+[0]   
+.TP 20
+\fBbody=\fP
+Body variables [pos,vel]     
+.TP 20
+\fBnp=\fP
+Number of particles per dimension.
+[256]      
+.TP 20
+\fBlbox=\fP
+Box size (Mpc/H) [512]     
+.TP 20
+\fBH=\fP
+Hubble constant [72]      
+.TP 20
+\fBheadline=\fP
+Random verbiage []     
+.SH CAVEAT
+The output snapshot time is really 'z'.
+.SH SEE ALSO
+binsnap(1NEMO), snapshot(5NEMO)
+.SH FILES
+.SH AUTHOR
+Peter Teuben / Harley Katz
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+26-Jun-12	V0.3 Created	PJT
+.fi

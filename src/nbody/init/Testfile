@@ -1,0 +1,89 @@
+DIR = src/nbody/init
+BIN = snapenter mkplummer mkexpdisk real mkommod mkhomsph mkspiral magalie
+NEED = $(BIN) tsf snapprint
+
+help:
+	@echo $(DIR)
+
+need:
+	@echo $(NEED)
+
+clean:
+	@echo Cleaning $(DIR)
+	@rm -f snapenter.in snapenter.out snapenter.cmp mkplummer.out mkexpdisk.out
+	@rm -f mkhomsph.out mkommod.out mkspiral.out
+
+NBODY = 10
+
+all: $(BIN)
+
+snapenter:
+	@echo Creating snapenter.in
+	@echo "snapenter.out" > snapenter.in
+	@echo "2" >> snapenter.in
+	@echo "1.0" >> snapenter.in
+	@echo "-1" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "-0.125" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0.5" >> snapenter.in
+	@echo "2" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0" >> snapenter.in
+	@echo "0.25" >> snapenter.in
+	@echo "0" >> snapenter.in
+	$(EXEC) snapenter < snapenter.in verbose=f headline="test suite"  ; nemo.coverage snapenter.c
+	@echo Running tsf
+	$(EXEC) tsf snapenter.out
+	@echo Running snapprint
+	$(EXEC) snapprint snapenter.out m,x,y,z,vx,vy,vz
+	@echo Comparing snapenter.out snapenter.cmp
+	$(EXEC) tsf snapenter.out octal=t | $(EXEC) rsf - snapenter.cmp ; cmp snapenter.cmp snapenter.out
+
+mkplummer:
+	@echo Running $@
+	$(EXEC) mkplummer mkplummer.out $(NBODY) seed=123 ; nemo.coverage mkplummer.c
+	$(EXEC) tsf mkplummer.out
+	$(EXEC) mkplummer - $(NBODY) seed=123 |\
+		massname="n(m)" masspars=p,-2 massrange=0.5,10 |\
+		tsf - ;  nemo.coverage mkplummer.c
+
+mkexpdisk:
+	@echo Running $@
+	$(EXEC) mkexpdisk mkexpdisk.out $(NBODY) seed=123 ; nemo.coverage mkexpdisk.c
+	$(EXEC) tsf mkexpdisk.out
+
+mkommod:
+	@echo Running $@
+	$(EXEC) mkommod $(NEMODAT)/k5isot.dat mkommod.out $(NBODY) seed=123
+	$(EXEC) tsf mkommod.out
+
+mkhomsph:
+	@echo Running $@
+	$(EXEC) mkhomsph mkhomsph.out $(NBODY) seed=123
+	$(EXEC) tsf mkhomsph.out
+
+mkspiral:
+	@echo Running $@
+	$(EXEC) mkspiral mkspiral.out $(NBODY) seed=123 a=100
+	$(EXEC) tsf mkspiral.out
+
+magalie:
+	@echo Disabled $@ because it hangs every now and then
+
+magalie_null:
+	@echo Running $@
+	@rm -rf magalie.out.tmpdir
+	$(EXEC) magalie magalie.out 2000 500 4000 cleanup=f
+	$(EXEC) tsf magalie.out
+	
+
+real:
+	@echo f2d conversion:
+	$(EXEC) mkplummer - 100 | $(EXEC) csf - - convert=f2d | $(EXEC) snapplot - 
+	@echo d2f conversion:
+	$(EXEC) mkplummer - 100 | $(EXEC) csf - - convert=d2f | $(EXEC) snapplot - 
+

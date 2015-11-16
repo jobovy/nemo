@@ -1,0 +1,101 @@
+.TH TABDATE 1NEMO "3 April 2009"
+.SH NAME
+tabdate \- Convert a date/time column
+.SH SYNOPSIS
+\fBtabdate\fP in_file out_file in_format out_format
+.SH DESCRIPTION
+\fBtabdate\fP converts a file with the string representation of one date
+format into another. It is simply a wrapper of 
+\fIstrptime(4)\fP to \fIstrftime(4)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+input file name(s). 
+No default.
+.TP
+\fBout=\fP
+output file name. 
+No default.
+.TP
+\fBformat1=\fP
+format to read with. The field descriptors are 
+explained in \fIstrptime(3)\fP and \fIdate(1)\fP.
+No default.
+.TP
+\fBformat2=\fP
+format to write with.
+No default.
+.TP
+\fBdcol=\fP
+Column to use for the input date/time. 
+If none supplied (or 0 used), the whole line will be used to extract the time from.
+This might be useful if the date and time are in separate columns. Default: 0
+.TP
+\fBtime0=\fP
+If given, this will be the format (as used by \fBformat1=\fP) to reference the
+time to. The output is now forced to be \fBformat0=%s\fP, i.e. number of seconds
+since \fBtime0\fP. The special value 0 is used to define the reference time as
+the first timestamp in the file. Default: none.
+.TP
+\fBscale=\fP
+Scale factor used when a time0= is used, and by which the time in seconds since time0
+is divided to get more reasonable units. Default:  1
+.SH FORMAT
+Although the field descriptors are described in e.g.\fIstrptime(3)\fP and \fIdate(1)\fP,
+here is a very brief summary of the common ones:
+.nf
+.ta +1i
+%a,%A	weekday name
+%b,%B,%h	month name
+%c	full date and time
+%C	century number (0-99)
+%d,%e	day in month (0-31)
+%D	Equivalent  to  %m/%d/%y
+%H	hour (0-23)
+%j	day number in year (1-366)
+%m	month number (1-12)
+%M	minute (0-59)
+%S	second (0-60),60 is for a leap second
+%T	Equivalent to %H:%M:%S
+%y	year within century (0-99)
+%Y	full year, e.g. 1991
+.fi 
+.SH EXAMPLES
+
+.nf
+  % echo '2001-11-12 18:31:01' | tabdate - - '%Y-%m-%d %H:%M:%S' '%c'
+  Mon Nov 12 18:31:01 2001
+
+  % date +%s | tabdate - - %s %c
+  Mon May  9 16:16:06 2005
+.fi
+and a contrived way to turn time into seconds
+.nf
+  tabdate tab0 - %T "1970 %T" | tabdate - - "%Y %T" %s
+.fi
+and here an example to find the number of seconds between two time-stamps:
+.nf
+  % set t0="`date +%s`"
+  ...
+  % set t1="`date +%s`"
+  % printf "%s\n%s\n" "$a"  "$b" | tabdate - - "%c" %s time0=0
+.fi
+.SH BUGS
+Cannot handle fractional seconds.
+.SH SEE ALSO
+date(1), strptime(3), strftime(3)
+.SH FILES
+.nf
+src/kernel/tab	tabdate.c
+.fi
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+1-Feb-05	V0.1 Created	PJT
+9-may-05	V0.2 added a working time0= and future tcol=	PJT
+4-apr-09	V0.3 added dcol= (instead of tcol=), fixed initializtion	PJT
+.fi

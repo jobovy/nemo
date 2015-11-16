@@ -1,0 +1,249 @@
+.TH RUNBODY4 1NEMO "13 March 2006"
+.SH NAME
+runbody4 \- Hermite N-body code with optional stellar evolution
+.SH SYNOPSIS
+.nf
+\fBrunbody4\fP [parameter=value]
+\fBnbody4  \fP\fI < nbody4.in\fP
+.fi
+.SH DESCRIPTION
+\fBrunbody4\fP is a frontend to Aarseth' NBODY4 program.
+It creates a run directory, prepares
+a parameter input file, and optionally input snapshot data, and runs
+the NBODY4 program. This can be useful if you need to run a lot of
+simulations unattended.
+.PP
+Output snapshots are by default not created, and must be  turned on
+with a options flag (see \fBkz=\fP below). All of the input
+parameter names are the same as their counterpart in
+\fBnbody4\fP.
+.PP
+Note that this front-end is not designed to run every possible way
+in which NBODY4 can be run, but it most useful to run initial conditions
+from a snapshot file.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given: 
+.TP 20
+\fBin=\fP
+input file (optional, see \fBnbody=\fP to generate your own input 
+data on the fly). If input data are given, it forces KZ(4)=2 (see 
+below).  
+Default: not used.
+.TP
+\fBoutdir=\fP
+Output run directory. This directory should not exist, although
+can be overriden with NEMO's standard \fBerror=\fP system keyword.
+No default.
+.TP
+\fBnbody=\fP
+Total particle number. The maximum value (NMAX) is compiled into
+the NBODY4 program. Note that even if \fIin=\fP is supplied, this
+parameter is needed.
+No default.
+.TP
+\fBnfix=\fP
+Output frequency of data save or binaries; KZ(3 & 6)
+[Default: 1]
+.TP
+\fBnrand=\fP
+Random number sequence skip.
+[Default: 0]
+.TP
+\fBnrun=\fP
+Run identification index.
+[Default: 1]
+.TP
+\fBeta=\fP
+Time-step parameter for force polynomials.
+[Default: 0.02]
+.TP
+\fBdeltat=\fP
+Output time interval in units of the crossing.
+[Default: 0.25]
+.TP
+\fBtcrit=\fP
+Termination time in units of the crossing time.
+[Default: 5]
+.TP
+\fBqe=\fP
+Energy tolerance (restart if DE/E > 5*QE & KZ(2) > 1)
+[Default: 2e-5]
+.TP
+\fBeps=\fP
+Potential softening parameter     
+[Default: 0.01]
+.TP
+\fBkz=\fP
+Non-zero options for alternative paths (see below) 
+[Default: 1,2,0::4,1::2,0::2,1]
+.nf
+.ta +0.5i
+1	COMMON save on unit 1 at end of run (=2: every 100*NMAX steps).
+2	COMMON save on unit 2 at output (=1); restart if DE/E > 5*QE (=2).
+3	Basic data on unit 3 at output (freq. NFIX; >1: cluster + tail).
+4 #	Binary diagnostics on unit 4 (# threshold levels = KZ(4) < 10).
+5	Initial conditions (#22 =0; =0: uniform & isotropic sphere;
+      	      =1: Plummer; =2: two Plummer models in orbit, extra input;
+      	      =3: massive perturber and planetesimal disk, extra input).
+      	      =4: massive initial binary, extra input; output on unit 35).
+6	Output of significant & regularized binaries (=1, 2, 3 & 4).
+7	Lagrangian radii (>0: RSCALE; =2, 3, 4: output units 6, 7, 12;
+      	      >=5: density & rms velocity at given radii on unit 26 & 27;
+              >=5: average mass at given radii on unit 36 every DELTAT;
+      	       =6: Lagrangian radii for two mass groups on unit 31 & 32.
+8	Primordial binaries (=1 & >=3; >0: BINOUT; >2: BINDAT; >3: HIDAT).
+9	Individual bodies printed at output time (MIN(5**KZ9,NTOT)).
+10	Diagnostic KS output (>0: begin; >1: end; >=3: each step).
+11 #	Synchronization of circular orbits (suppressed).
+12	Disk shocks (=1: standard model) or interstellar clouds (< 0).
+13	Scaling of time (1: variable by t_cr; 2: variable by t_r;
+      	       -1: constant scaling to t_r; -2: constant scaling to t_c).
+14	External force (=1: linearized; -1: cutoff; =2: point-mass galaxy;
+      	   =3: point-mass + disk + logarithmic halo in any combination).
+15	Triple, quad, chain (#30 > 0) or merger search (>1: full output).
+16	Updating of regularization parameters (RMIN, DTMIN & ECLOSE).
+17	Modification of ETA (>=1) & ETAU (>1) by tolerance QE.
+18	Hierarchical systems (=1: diagnostics; =2: primordial; =3: both).
+19	Stellar evolution and mass loss (=1: old supernova scheme;
+      	            =3: Eggleton, Tout & Hurley; >4: Chernoff--Weinberg).
+20	Initial mass function (=0,1: Salpeter; >1: various, see IMF).
+21	Extra output (>0: model, etc; >1: CENTRE; >2: MTRACE; >3: GLOBAL).
+22	Initial conditions on unit 10 (=1: output; =2,3(unscaled): input).
+23	Escaper removal (>1: diagnostics in file ESC; =2: angles unit #6;
+      	                 >1: tidal tails output if #14 = 3).
+24	Initial conditions for subsystem (routine SCALE; KZ(24) = #).
+25 #	Partial reflection of KS binary orbit (GAMMA < GMIN; suppressed).
+25	HR diagnostics of evolving stars (output of B & S on #82 & 83).
+26	Slow-down of two-body motion (=1: KS binary; =2: chain binary).
+27	Two-body interactions (-2: RADIUS = 0; -1: collision detection;
+      	                       =1: sequential circ; > 0: collision).
+28	(not used).
+29 #	Boundary reflection for hot system (suppressed).
+30	Chain regularization (=1: basic; >1: main output; >2: each step).
+31	Centre of mass correction after energy check.
+32	Increase of output intervals (based on single particle energy).
+33	Block-step diagnostics at main output (=2: active pipes).
+34 #	Roche lobe overflow (suppressed).
+35	Time offset (global time from TTOT = TIME + DTOFF; offset = 100).
+36	Step reduction for hierarchical systems (not recommended).
+37	Step reduction for encounters with high-velocity particles.
+38 #	Multiple use of GRAPE-6 (sleep 1 sec after each timer check).
+39	Neighbour list (=-1: on host; =0: full list or closest on GRAPE).
+40	(not used).
+
+#	currently surpressed
+.fi
+.TP
+\fBxtpar1=\fP
+Mass of external Plummer model (KZ(15) = 1;
+[Default: 1]
+.TP
+\fBxtpar2=\fP
+Length scale for Plummer model (KZ(15) = 1)
+[Default: 2]
+.TP
+\fBzmgas=\fP
+Mass scale for logarithmic potential (KZ(15) = 2)
+.TP
+\fBrgas=\fP
+Length scale for logarithmic potential (KZ(15) = 2)
+.TP
+\fBalphas=\fP
+Power-law index for initial mass function (routine DATA)
+[Default: 2.3]
+.TP
+\fBbody1=\fP
+Maximum particle mass before scaling   
+[Default: 5.0]
+.TP
+\fBbodyn=\fP
+Minimum particle mass before scaling   
+[Default: 1.0]
+.TP
+\fBq=\fP
+Virial ratio (q=0.5 for virial equilibrium)  
+[Default: 0]
+.TP
+\fBvxrot=\fP
+XY-velocity scaling factor (> 0 for solid-body rotation)
+[Default: 0]
+.TP
+\fBvzrot=\fP
+Z-velocity scaling factor (not used if VXROT =
+[Default: 0]
+.TP
+\fBrbar=\fP
+Virial radius in pc (for scaling to physical
+[Default: 1]
+.TP
+\fBzmbar=\fP
+Mean mass in solar units   
+[Default: 1]
+.TP
+\fBxcm=\fP
+Displacement for subsystem (routine SCALE; KZ(17)) 
+.TP
+\fBecc=\fP
+Eccentricity of relative motion for subsystem (ECC =< 1)
+.TP
+\fBKZ#=\fP
+This is an indexed keyword,and the upper case version of the kz= array keyword. This
+way the user can override single elements of the kz= vector, and using a default
+for the long kz= vector. For example "kz=@kz.def KZ22=2 KZ5=2". See \fIgetparam(3NEMO)\fP
+for a description of indexed keywords.  No default.
+.SH EXAMPLES
+\fBnbody4\fP can also be used to generate snapshots. Here is an example
+to create a 1024 body homogeneous sphere in the directory
+run1 and a plummer sphere in run2.
+.nf
+    % runbody4 "" run1 1024 tcrit=0 KZ5=0 KZ22=1
+    % u3tos run1/OUT3 run1/run1.snap mode=4
+
+    % runbody4 "" run2 1024 tcrit=0 KZ5=1 KZ22=1
+    % u3tos run2/OUT3 run2/run2.snap mode=4
+
+.fi
+.PP
+You can also supply existing NEMO snapshots as initial conditions
+.nf
+    % runbody4 run2/run2.snap run3 tcrit=1
+.fi
+.SH BUGS
+Scaling can cause output to become out of bounds.
+.PP
+It appears to just create small systems, like nbody=10 tcrit=0, will hang the program.
+.SH SEE ALSO
+nbody4(1NEMO), nbody2(1NEMO), snapshot(5NEMO), u3tos(1NEMO), stou4(1NEMO), nbody4(5NEMO)
+.SH FILES
+.nf
+.ta +2i
+$NEMO/src/nbody/evolve/aarseth/tools	code
+$outdir/fort.1                       	restart dump (compile time dep. size)
+$outdir/fort.2                         	restart dump (compile time dep. size)
+$outdir/fort.4                         	restart dump (compile time dep. size)
+$outdir/fort.7                         	warning on nblist
+$outdir/fort.8                         	T=
+$outdir/fort.12				lagrangian radii?
+$outdir/fort.16				ksrect
+$outdir/fort.26				density
+$outdir/fort.27				velocity
+$outdir/fort.29				hivel
+$outdir/fort.40				?
+$outdir/fort.82				?
+$outdir/fort.83				list of (several) times the N particles with something
+$outdir/fort.88				T,N,...
+$outdir/ESC				List of times and escapers with their properties
+
+$outdir/OUT3                        	particle dump (see \fIu3tos(1NEMO)\fP)
+HIDAT
+OUT9
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+28-feb-2006	V0.1 Created in Cambridge	PJT
+10-mar-2006	V0.4 for a more formal version in NEMO, include Brut4's nbody4 version	PJT
+13-mar-2006	V0.5 minor updated via Sverre (fixing small N initialization)	PJT/SJA
+.fi

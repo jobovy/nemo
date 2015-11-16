@@ -1,0 +1,91 @@
+.TH TWSPEED 1NEMO "18 November 2003"
+.SH NAME
+twspeed \- calculate the pattern speed of a stellar system using the Tremaine-Weinberg method
+.SH SYNOPSIS
+.PP
+\fBtwspeed vel=\fPccd-velocity \fBden=\fPccd-density [parameter=value]
+.SH DESCRIPTION
+\fItwspeed\fP calculates the pattern speed of a stellar system using
+Tremaine & Weinberg's method (1984ApJ...282L...5T). For this
+a line parallel but offset to the line of nodes
+of a galaxy must have information on intensity and radial velocity.
+.PP
+\fItwspeed\fP assumes the line of nodes is along the X-axis, the
+galaxy center and position angle are keywords but not implemented yet?
+.PP
+In the following (x,y) are defined along the major and minor axis of
+the galaxy resp., and
+\fPpspeed\fP will then compute the numerical sums 
+.nf
+        V(y) =  SUM ( vel(x,y) * den(x,y)) / SUM ( den(x,y) )
+
+        X(y) =  SUM ( x * den(x,y)) / SUM ( den(x,y) )
+.fi
+where the summation is along \fIx\fP. This will result in a correlation
+.nf
+	V = Omega * SIN(inc) * X
+.fi
+The output will be a table which can be inspected for signal and noise,
+and fed into a least squared fitter, such as \fItablsqfit(1NEMO)\fP
+or \fItabnllsqfit(1NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBvel=\fIvel-file\fP
+input file, must be the radial velocity in
+\fIimage(5NEMO)\fP format [no default].
+.TP
+\fBden=\fIint-file\fP
+input file, must be the intensity in \fIimage(5NEMO)\fP format [no default].
+.TP 
+\fBxin=\fIint-file\fP
+input mean position image (optional)
+.TP
+\fBpa=\fP
+*** Position Angle of disk [90]
+.TP
+\fBinc=\fP
+*** Inclincation of the disk [0]
+.TP
+\fBcenter=\fP
+*** Center of galaxy (map-center) []
+.TP
+\fBstep=\fP
+Slit width in pixels [1]
+.SH EXAMPLES
+Here is an example creating a rotating bar at pattern speed 1, inclining it by 30
+degrees,and measuring a pattern speed of 0.5 (omega*sin(inc)):
+.nf
+
+% mkdisk disk1 10000 harmonic mass=1
+% snapscale disk1 disk2 rscale=1,0.5,0 vscale=0
+% snapspin disk2 disk3 omega=1
+% snaprotate disk3 disk4 30 x
+% snapgrid disk4 ccd4-den moment=0
+% snapgrid disk4 ccd4-vel moment=-1
+% twspeed ccd4-vel ccd4-den > ccd4.tab
+% tabnllsqfit ccd4.tab
+..
+Fitting a+bx:
+a= -5.11039e-05 0.000116198
+b= -0.499963 0.00931362
+..
+.fi
+.SH "SEE ALSO"
+snapslit(1NEMO), snaprotate(1NEMO), tabnllsqfit(1NEMO), tablsqfit(1NEMO), snapshot(5NEMO), image(5NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+~/src/pjt/image  	twspeed.c
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +2.0i +4.0i
+17-Aug-87	Original created as pspeed (though never made it into NEMO)	PJT
+18-nov-03	1.0: documented the new twspeed version 	PJT
+22-apr-04	1.1: changed order of keywords  	PJT
+.fi
+

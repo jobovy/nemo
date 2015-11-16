@@ -1,0 +1,70 @@
+.TH SNAPCENTERP 1NEMO "1 April 2006"
+.SH NAME
+snapcenterp - find center of a snapshot with potential minimum search
+.SH SYNOPSIS
+\fBsnapcenterp in=\fPsnap-file [parameter=value] .\|.\|.
+.SH DESCRIPTION
+\fIsnapcenterp\fP finds the potential center of a snapshot using
+the iterative Cruz method. 
+.PP
+This program is in development, for example, no output file is written.
+See also \fIsnapcenter(1NEMO)\fP and \fIsnapshift(1NEMO)\fP.
+.SH PARAMETERS
+The following parameters are recognized; they may be given in any order.
+.TP 24
+\fBin=\fP\fIsnap-file\fP
+Input data is read from \fIsnap-file\fP, which must be in snapshot format.
+No default.
+\fBtimes=\fP\fItime-range\fP
+Only data frames with time values within \fItime-range\fP, which
+is of the form, eg, "1.0:1.5,2.5,3.0", will be translated.
+[Default: \fBall\fP].
+.TP
+\fBweight=\fP\fIexpression\fP
+The value of \fIexpression\fP is used to compute the centroid.
+\fIexpression\fP is a real-valued C language expression over the
+real values \fBx\fP, \fBy\fP, \fBz\fP, \fBvx\fP, \fBvy\fP, \fBvz\fP,
+\fBphi\fP, \fBm\fP, \fBt\fP, and the integer value \fBi\fP.
+[Default \fBm\fP].
+.TP
+\fPreport=t|f\fP
+Report the center of mass coordinates. These are 2*NDIM numbers,
+position and velocity, of the new center of mass in the old
+coordinates.
+If you want to use \fIsnapcenter\fP in a pipe, you need to reset
+\fBreport=f\fP, since both standard output and filestruct output
+will get merged, and become illegable for the next program in the
+pipe.
+[Default: \fBt\fP].
+.TP
+\fPone=t|f\fP
+Write output center of mass (COM) as a single body with total mass
+and COM coordinates as computed from \fBweight=\fP.**not active**
+[Default: \fBf\fP].
+.TP
+\fBeps=\fP
+Softening length, in length units used in the snapshot. [0.025]
+.TP
+\fBeta=\fP
+Convergence stop criterion. This number is the length of the difference 
+vector of two subsequent iterations of the potential center, and is thus
+in units of those of the snapshot. [0.001]
+.TP
+\fBfn=\fP
+Fraction of particles to consider in the potential finding algorithm [0.5] 
+**currently all particles used**
+.TP
+\fBiter=\fP
+Maximum number of iterations to use. If the \fBeta\fP stop criterion
+did not converge, this criterion will stop the iterations. [10]
+.SH SEE ALSO
+snapshift(1NEMO), snapcenter(1NEMO), bodytrans(3NEMO), snapshot(5NEMO)
+.PP
+Cruz., F et al. - (2002) Rev.Mex.de Astr.y Astr. 38, 225
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.ta +1i +4i
+.nf
+1-apr-06	0.1 Created in Rembrandt Hotel		PJT
+.fi

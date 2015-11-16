@@ -1,0 +1,19 @@
+This directory contains manuals:
+
+	Makefile	aid in making (la)tex based manuals
+	README		this file	
+	*.tex		main latex files
+	*.inc		latex include files
+	*.src		latex verbatim file to be included by \verbatim
+	*.sty		latex style files 
+				(currently nemo.sty absorbes all style mods)
+
+
+
+they still use the old-style latex. A more modern approach would be
+
+
+- Use pdflatex instead of latex (most people want a pdf as output anyway)
+- Convert ps/eps file to pdf
+- include it using \includegraphics[foo]  (note the lack of extension)
+

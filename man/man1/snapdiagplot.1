@@ -1,0 +1,60 @@
+.TH SNAPDIAGPLOT 1NEMO "17 June 1992"
+.SH NAME
+snapdiagplot \- plot diagnostics of an N-body run
+.SH SYNOPSIS
+\fBsnapdiagplot in=\fPsnap_file [parameter=value] .\|.\|.
+.SH DESCRIPTION
+\fIsnapdiagplot\fP plots the diagnostics of an N-body run. As input it
+needs a \fIsnapshot\fP(5NEMO) file.  The diagnostics currently
+displayed, as functions of time, are the total binding energy and the
+center of mass offset.
+.SH PARAMETERS
+The following parameters are recognized.
+.TP 24
+\fBin=\fP\fIsnap_file\fP
+Input data is read from \fIsnap_file\fP.  Default: \fIrequired\fP.
+.TP
+\fBtimes=\fItime_range\fP
+Only plot frames with time values within \fItime_range\fP,
+which is of the form, eg, "1.0:1.5,2.5,3.0".  Default: \fBall\fP.
+.TP
+\fBexactpot=\fP\fIpot_flag\fP
+If set, recompute potential energy from particle data.
+Note this is O(N^2).  Default: \fBfalse\fP.
+.TP
+\fBeps=\fIsoftening\fP
+If \fBexactpot\fP is set, this softening length is used.
+Default: \fB0.05\fP.
+.TP
+\fBformal=\fP\fIformal_flag\fP
+If set, generate publication-style plot.  Default: \fBfalse\fP.
+.SH SEE ALSO
+snapplot(1NEMO), snapshot(5NEMO).
+.SH DATA FORMAT
+\fIsnapdiagplot\fP expects a \fBDiagnostics\fP set inside a \fPSnapShot\fP.
+Here is an example of the current contents. Note not all elements are
+currently being used.
+.nf
+ set Diagnostics
+    double Energy[3] -0.250646 0.252928 -0.503574
+    double KETensor[3][3] 0.0895620 -0.000171242 -0.00146190
+      -0.000171242 0.0829969 -0.00185623 -0.00146190 -0.00185623
+      0.0803691
+    double PETensor[3][3] -0.167254 0.00296881 -0.00315221 0.00356183
+      -0.165142 0.000637358 -0.00312277 0.000509798 -0.163122
+    double AMTensor[3][3] 0.00000 0.00675746 0.00892347 -0.00675746
+      0.00000 0.0221447 -0.00892347 -0.0221447 0.00000
+    double CMPhaseSpace[2][3] 7.16658e-17 1.24737e-16 3.34476e-17
+      1.90820e-17 7.69784e-18 -2.33103e-18
+    double cputime 0.000833333
+  tes
+.fi
+.SH AUTHOR
+Joshua E. Barnes
+.SH HISTORY
+.nf
+.ta +1i +4i
+dark-ages	0.0 Created	JEB
+2-jun-88	1.0 Man Created...   	JEB
+17-jun-92	1.2 fixed times=; added energy conservation message	PJT
+.fi

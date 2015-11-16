@@ -1,0 +1,48 @@
+.TH ALLOCATE 3NEMO "19 September 2003"
+.SH NAME
+allocate, reallocate \- memory allocation with error control.
+.SH SYNOPSIS
+.nf
+    #include <stdinc.h>
+
+    void *allocate(int nb);
+    void *reallocate(void *bp, int nb);
+.fi
+.SH DESCRIPTION
+\fIallocate\fP and \fIreallocate\fP are the NEMO counterparts
+of \fIcalloc(3)\fP and \fIrealloc(3)\fP, but with guaranteed
+to return a sufficient amount of memory. The caller does not
+have to do any error control, instead the NEMO routines will
+call \fIerror(3NEMO)\fP and in general exit when memory is
+exhausted.
+.PP
+This would also be the place to replace you malloc routine with
+another one, see
+.nf
+    http://www.cs.colorado.edu/homes/zorn/public_html/Malloc.html
+.fi
+.SH EXAMPLE
+Here is an example of allocating a simple 1D array, after which
+the size is increased. All failures in allocation will result
+in a call to \fIerror(3NEMO)\fP.
+.nf
+
+    int n = 1000;
+    double *x = allocate(n * sizeof(double));
+    ...
+    x = reallocate(x,2000);
+.fi
+.SH BUGS
+Although NEMO program should all call \fIallocate\fP instead of 
+the system routine \fImalloc(3)\fP, there are a few places left where
+\fImalloc\fP is called since failure to allocate must be caught
+immediately.
+We don't supply a good solution to this, other than error control
+(see \fIerror(3NEMO)\fP).
+.SH HISTORY
+.nf
+.ta +1.0i +3.0i
+5-mar-94	man created 	PJT
+5-may-03	added an example	PJT
+19-sep-03	documented that calloc is used (since april 2001)	PJT
+.fi

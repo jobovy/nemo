@@ -1,0 +1,144 @@
+.TH HDFGRID 1NEMO "15 December 2004"
+.SH NAME
+hdfgrid \- Regrid a polar HDF4 SDS to cartesian image
+.SH SYNOPSIS
+\fBhdfgrid\fP [parameter=value]
+.SH DESCRIPTION
+\fBhdfgrid\fP regrids HDF (SDS) files that are assumed to
+be in polar (rad-phi) coordinates. This program was initially developed 
+for the bar-hydro project (Piner, Stone & Teuben, ApJ - nov 1995)
+using a version of \fBcmhog\fP, though it can now also handle
+rank=3 SDS files for which the last dimension (in HDF the first)
+is 1, as long
+as the first two dimensions are radius and angle. Another constraint
+is that the data must fill half the plane (mirror=t) or a full
+plane (mirror=f), otherwise interpolation errors will dominate
+the gaps in the region of missing data. There are some 
+keywords (\fBphi1, scale2, phi3\fP) that allow you to rotate and
+scale your data around the positive X-axis into
+either -pi/2:pi/2 (mirror=t) or -pi:pi (mirror=f).
+.PP
+The (2D) four-point interpolation that is used in regridding is
+based on the one in \fIcmhog/movie.src\fP, but includes correct
+interpolations for points near the Y axis that need contributions
+from the phantom "mirror" points (recall that the files are
+assumed to contain X>0 information only, the X<0 plane is assumed
+from point symmetry around the origin). 
+.PP
+It is also possible to simply average the polar grid values into
+cartesian cells, using the \fBpic=t\fP method, but this will generally
+result in variable amount of smoothing and depending on the distribution
+of points in Rad-Phi can cause moire patterns.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP\fIhdf_sds\fP
+Input file (HDF SD). No default.
+.TP
+\fBout=\fP\fIimage\fP
+Output file, in \fIimage(5NEMO)\fP format.
+.TP
+\fBselect=\fP\fIframe_no\fP
+Select which SDS from the file (1=first). See also \fBzvar=\fP below.
+[Default: \fB1\fP].
+.TP
+\fBnx=\fP\fIX_pixels\fP
+Number of pixels in X.
+[Default: \fB256\fP]
+.TP
+\fBny=\fP\fIY_pixels\fP
+Number of pixels in Y   
+[Default: \fB256\fP].
+.TP
+\fBxrange=\fP\fIxmin:xmax\fP
+Range in X     
+[Default: \fB-16:16\fP].
+.TP
+\fByrange=\fP\fIymin:ymax\fP
+Range in Y     
+[Default: \fB-16:16\fP].
+.TP
+\fBzvar=\fP\fIgrid_var\fP
+Gridding variable. Normally left alone, unless certain allowed mathematical
+expressions on the direct griddable variables (as defined by \fBselect=\fP)
+need to be overriden. Allowed are \fBvr\fP (select=1), \fBvt\fP (select=2),
+\fBden\fP (select=3), \fBvx\fP, \fBvy\fP, 
+\fBvm\fP and \fBvp\fP. Note
+that \fBvm\fP and \fBvp\fP are special cases of
+a linear combination of \fBvx\fP, \fBvy\fP
+\fIvm =  (vx-vy)/sqrt(2)\fP and \fIvp = (vx+vy)/sqrt(2)\fP, just
+to get an idea of the velocity field under a "middle" position angle.
+Default: not used, select= is used.
+.TP
+\fBpic=t|f\fP
+Use the Particle In Cell method of gridding? This method is similar, but
+not as sophisticated as \fIsnapgrid(1NEMO)\fP. The alternative, and also
+the default method, is 4-point interpolation from the corner cell in
+polar coordinates in which the cartesian cell center lies.
+[Default: \fBt\fP].
+.TP
+\fBmirror=t|f\fP
+Mirror points? [Default: \fBt\fP].
+.TP
+\fBsymmetry=odd|even|automatic\fP
+Override symmetry properties of the variable to be gridded. 
+This option is not used yet. See also \fBmirror=\fP
+.TP
+\fBit0=\fP
+Shifts the values in theta by \fBit0\fP pixels. This is equivalent 
+by rotating the image counterclockwise by that many pixels. Useful
+for double bars and manually rotating the frame of reference
+(Maciejewski et al). [Default: \fB0\fP]
+.TP
+\fBphi1=\fP
+The first operation is a rotation. This angle (in radians) will be added to the 
+angles. Do not ues for serious work, as it only applies to density fields.
+Default: 0
+.TP
+\fBscale2=\fP
+The second operation is a scaling. All angles are multiplies by this number.
+.TP
+\fBphi3=\fP
+The third, and last, operation is a rotation again. 
+This angle (in radians) will be added to the angles after the previous two.
+It was added for convenience, since in principle \fBphi1\fP and 
+\fPscale2\fP can get you anywhere on the plane. The resulting formulae
+is:
+.nf
+	phi_out = (phi  + \fBphi1\fP) * \fBscale2\fP  + \fBphi3\fP
+.fi
+Default: 0
+.SH EXAMPLES
+Often used in scripts, here is a snippet from a script that regrids an
+HDF file into TIFF for movie recording, but applying a non-linear scaling
+to the data. 
+.nf
+
+  hdfgrid hdf001 - select=3 nx=256 ny=256 xrange=-8:8 yrange=-8:8 |\\
+     ccdmath - - "log(%1)" |\\
+     ccdmath - - "ifeq(%1,0.0,$dmin,%1)" |\\
+     ccdfits - tmp$$
+  fitstiff tmp$$ movie1.$i.tiff datamin=-1 datamax=2 lut=ds
+
+.fi
+Several interesting peculiarities are to be noted: (1) ccdmath is called
+twice, because of a bug in combining the two; \fBifeq(%1,0.0,$dmin,log(%1))\fP
+could not be used. (2) fitstiff cannot read from a pipe,  hence the extra
+annoying disk file \fBtmp$$\fP. (3) Lookup RGB color tables are in 
+\fB$NEMODAT/lut\fP.
+.SH SEE ALSO
+hdfwedge(1NEMO)
+.SH FILES
+src/image/hdf/cmhog  	hdfgrid.c
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+25-May-95	V1.0 Created for IAU157 movie	PJT
+12-dec-99	V1.3 added it0= shifting arrays to fake a rotation, for Witold	PJT
+27-aug-02	V1.5 added mirror= to allow for full grid simulations	PJT
+3-dec-04	V2.0 increased MAXRANK to handle 2+1 dim input files	PJT
+15-dec-04	V2.1 added pic=, and documented the new phi1,scale2,phi3 transformations	PJT
+.fi

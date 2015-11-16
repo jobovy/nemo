@@ -1,0 +1,68 @@
+#! /bin/csh -f
+#
+#
+if ( $#argv == 0 ) then
+  echo "Usage: $0 progname key1=def1 ..."
+  echo "version 26-feb-2009"
+  echo "Write template NEMO program based on keywords and default values"
+  echo "Output will be in a file progname.c, which cannot be overwritten"
+  
+  exit 0
+endif
+
+set prog=$1
+set name=$prog.c
+set date=`date +%d-%b-%Y` 
+shift argv
+
+if ( -e $name ) then
+  echo File $name already exists, will not overwrite it.
+  exit 0
+endif
+
+alias e echo
+
+e '/*' > $name
+e ' *  TEMPLATE: created by NEMO ' >> $name
+e ' */' >> $name
+e '' >> $name
+e '#include <nemo.h>' 		>> $name
+e '' >> $name
+e 'string defv[] = {'		>> $name
+foreach a ($argv)
+e '    "'$a'\n    some help",'	>> $name
+end
+e '    "VERSION=0.0\n       '$date' XYZ",'		>> $name
+e '    NULL,'			>> $name
+e '};'				>> $name
+e '' >> $name
+e 'string usage="TEMPLATE program usage -- fill in yourself";' >> $name
+e '' >> $name
+#    break the CVS ID string in two pieces to fool cvs 
+#    'string cvsid="$Id: template,v 1.10 2009/02/26 20:48:08 pteuben Exp $";' >> $name
+e -n 'string cvsid="$Id' >> $name
+e    ':$";'              >> $name
+e '' >> $name
+e 'void nemo_main()'		>> $name
+e '{'				>> $name
+e '  /* your code goes here */' >> $name
+e '  /* e.g.   string s = getparam("s");  */'  >> $name
+e '  /* e.g.   int    i = getiparam("i"); */'  >> $name
+e '  /* e.g.   real   r = getrparam("r"); */'  >> $name
+e '  /* e.g.   double d = getdparam("d"); */'  >> $name
+e '  /* followed by lots of lovely calculations */' >> $name
+e '  warning("New program");'                       >> $name
+e '  /*'                                            >> $name
+foreach a ($argv)
+    set k=`echo $a | awk -F= '{print $1}'`
+e '    '$k' = getparam("'$k'");'                    >> $name
+
+end
+e '   */'                                           >> $name
+e '}'				>> $name
+
+echo "All done, $name created. You can compile it using the command"
+echo "        bake $prog"
+echo "  or:   mknemo $prog"
+echo "When done, don't forget to create a template man page:"
+echo '        $NEMO/src/scripts/mkman' "$prog > $prog.1"

@@ -1,0 +1,33 @@
+#! /bin/csh -f
+#
+
+switch (`uname -s`)
+  case "Linux":
+    echo Linux selected
+    cd $NEMO/usr/vogl
+    make -f Makefile.linux -i DEST=$NEMOLIB 
+    make -f Makefile.linux -i DEST=$NEMOLIB  install clobber
+    breaksw
+ case "Darwin":
+    echo Darwin selected, but experimental
+    cd $NEMO/usr/vogl
+    make -f Makefile.linux -i DEST=$NEMOLIB 
+    make -f Makefile.linux -i DEST=$NEMOLIB  install clobber
+    breaksw
+ case "SunOS":
+    echo SunOS selected, but experimental, uses gcc, but works ok with cc also
+    cd $NEMO/usr/vogl
+    make -f Makefile.linux -i DEST=$NEMOLIB 
+    make -f Makefile.linux -i DEST=$NEMOLIB  install clobber
+    breaksw
+  default:
+    echo System `uname -s` not known to me yet....
+    breaksw
+endsw
+
+if (-e $NEMOLIB/libnemo.a) then
+  mknemo snapxyz xyzview
+else
+  echo Skipping making snapxyz xyzview, libnemo.a not yet ready
+endif
+

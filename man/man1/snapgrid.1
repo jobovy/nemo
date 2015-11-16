@@ -1,0 +1,284 @@
+.TH SNAPGRID 1NEMO "14 February 2013"
+.SH NAME
+snapgrid \- grid a snapshot into a 2D or 3D image (cube), with optional moments
+.SH SYNOPSIS
+.PP
+\fBsnapgrid in=\fPsnapshot \fBout=\fPimage [parameter=value]
+.SH DESCRIPTION
+\fIsnapgrid\fP grids three arbitrary \fIbodytrans(3NEMO)\fP expressions 
+(default: \fBx\fP, \fBy\fP and \fB-vz\fP) of a snapshot into a 2D or 3D
+\fIimage(5NEMO)\fP dataset, with optional astronomical projection for direct
+comparision with astronomical images.
+.PP
+The X and Y coordinates of the datacube can only
+be regularly gridded in histogram fashion 
+(for spatial XY-smoothing see \fIccdsmooth(1NEMO)\fP, for interpolating
+see also \fIsnapmap(1NEMO)\fP),
+however the Z coordinate has the property that it can take moments in this
+variable, pick a number of planes or planes with smoothing.
+.PP
+The output image is written in standard \fIimage(5NEMO)\fP format, 
+and can be accessed by various other programs for smoothing, display etc.
+.PP 
+Although \fIsnapgrid(1NEMO)\fP can grid datacubes (e.g. X-Y-Z), 
+\fIsnapgridsmooth(1NEMO)\fP is probably easier to use, 
+since it does not integrate along any lines of sight, whereas this
+program is more suited for taking moments along the 3rd axis.
+.PP
+For images that require more accurate interpolation, instead of
+this histogramming approach, use \fIsnapmap(1NEMO)\fP.
+.PP
+For a related program that creates images (and can create movies as well),
+see \fIuns_2dplot(1NEMO)\fP.
+.PP
+As of V6.0 the units in 3D cubes will be particle density. This ensures
+that programs such as \fIccdmom(1NEMO)\fP and \fIccdstat(1NEMO)\fP give
+the proper answer in their summed emission.
+.SH PARAMETERS
+The following parameters are recognized:
+.TP 20
+\fBin=\fIin-file\fP
+input file, must be in \fIsnapshot(5NEMO)\fP format. Multiple snapshots can
+be stacked uses the \fBtimes=\fP keyword: see \fBstack=\fP below.  [no default].
+.TP
+\fBout=\fIout-file\fP
+output file, will be in \fIimage(5NEMO)\fP format [no default].
+.TP
+\fBtimes=\fP\fIt1:t2,t3,..\fP
+Selection of the times of snapshots to be selected for gridding.
+For \fBstack=t\fP all snapshots will be co-added into one image,
+however selecting \fBstack=f\fP or selecting multiple \fBevar\fP's
+one can request multiple output images.
+[Default: \fBall\fP].
+.TP
+\fBxrange=\fIxb:xe\fP
+Range in \fBxvar\fP to bin, the coordinates are allowed to decrease as well as increase.
+ [default: \fB-2:2\fP].
+.TP
+\fByrange=\fIxb:xe\fP
+Range in \fByvar\fP to bin [default: \fB-2:2\fP].
+.TP
+\fBzrange=\fIxb:xe\fP
+Range in \fBzvar\fP to bin, or take moments of
+[default: \fB-infinity:infinity\fP].
+.TP
+\fBxvar=\fP\fIx-expression\fP
+The value of \fIx-expression\fP is gridded along the X axis.
+[default: \fBx\fP].
+.TP
+\fByvar=\fP\fIy-expression\fP
+The value of \fIy-expression\fP is gridded along the Y axis.
+[default: \fBy\fP].
+.TP
+\fBzvar=\fP\fIz-expression\fP
+The value of \fIz-expression\fP is gridded along the Z axis (\fBnz\fP>1), 
+or moments taken off (\fBnz=1\fP). [default: \fB-vz\fP].
+.TP
+\fBevar=\fIemissivity\fP
+Variable to denote emissivity per particle. You can select more than 1
+expression, in which case different images will be written out
+(only in \fBstack=f\fP mode)
+[default: \fBm\fP].
+.TP
+\fBtvar=\fItau\fP
+Variable to denote the optical depth of a particle. [Default: 0]
+.TP
+\fBdvar=\fIdepth\fP
+Variable to denote the line of sight. [Default: z]
+.TP
+\fBsvar=\fIsmoothing\fP
+Variable to denote gaussian smoothing  Note this is the
+gaussian sigma, not the FWHM (FMHW = 2.355 * sigma).
+.TP
+\fBnx=\fIx-pixels\fP
+Number of pixels along the X axis of the cube [default: \fB64\fP].
+.TP
+\fBny=\fIy-pixels\fP
+Number of pixels along the Y axis of the cube [default: \fB64\fP].
+.TP
+\fBnz=\fIz-pixels\fP
+Number of pixels along the Z axis of the cube. If one pixel is choosen,
+moments can be taken (see below), else a simple gridding is used.
+[default: \fB1\fP].
+.TP
+\fBxlab=\fIx-label\fP
+Text used to label the X-axis. By default the \fBxvar\fP expression is used.
+It may be useful in certain astronomical environment to label the axis
+with recognized labels like RA---TAN, DEC--SIN, GLON etc.
+.TP
+\fBylab=\fIy-label\fP
+Same for the Y-axis.
+.TP
+\fBzlab=\fIz-label\fP
+Same for the Z-axis.
+.TP
+\fBmoment=\fInumber\fP
+Order of the Z-gridding.
+Most commonly choosen are: \fB0\fP (total intensity), \fB1\fP 
+(velocity zvar weighted intensity) and \fB2\fP (velocity square weighted intensity),
+where 'intensity' should really be read as surface density per 
+square unit length. Special values of \fB-1\fP and \fB-2\fP can be
+used to directly compute the \fIevar\fP weighted
+mean and the dispersion from the mean.
+\fB-3\fP and \fB-4\fP are used to compute the gaussian-hermitian h3 and h4 moments
+(see e.g. van der Marel & Franx, 1993)
+[default: \fB0\fP].
+.TP
+\fBmean=t|f\fP
+Should the \fIemission\fP in a cell be averaged?
+This also controls the units of the gridding. For \fBmean=f\fP (the default) a
+\fIsurface-density\fP is computed (emission per square length),
+ whereas for \fBmean=t\fP the average per
+pixel (or voxel) is computed of the units of emission. Another way of looking 
+at this, \fBmean=t\fP is for interpolating maps (see also \fIsnapmap(1NEMO)\fP),
+where as \fBmean=f\fP is for splatting information as if this was observed.
+[Default: \fBf\fP].
+.TP
+\fBstack=t|f\fP
+Should all snapshots from the input file be stacked, or write one
+image per selected (see \fBtimes=\fP) time? [default: \fBf\fP].
+.TP
+\fBintegrate=t|f\fP
+If selected, instead of summing points along the \fIzvar\fP, they
+are sorted and integrated along \fIdvar\fP. This is appropriate
+when emission represents something like a density, instead of a mass,
+and a total column density is needed. 
+** This option can only compute 2D moment=0 maps 
+and also cannot handle stacked snapshots yet **
+[default: \fBf\fP].
+.TP
+\fBproj=\fP
+If a valid projection type (SIN, TAN, ARC, NCP, GLS, MER, AIT)
+but see also \fIwcs(1NEMO)\fP, the input coordinates are interpreted
+in angular degrees, and griddes with the appropriate sky projection.
+Default: no sky projection.
+.SH EXAMPLES
+The following example makes three moment images from an N-body snapshot,
+then smooths
+and combines them into an 'intensity' (\fBint\fP), 'mean velocity' (\fBvel\fP)
+and 'velocity dispersion' (\fBsig\fP) map using a CCD math operator.
+.PP
+Note that the moment maps must be smoothed \fIbefore\fP they
+can be combined to the proper velocity and dispersion maps.
+.nf
+   % \fBsnapgrid in=nbody.dat out=map0 moment=0\fP
+   % \fBsnapgrid in=nbody.dat out=map1 moment=1\fP
+   % \fBsnapgrid in=nbody.dat out=map2 moment=2\fP
+   % \fBccdsmooth in=map0 out=map00 gauss=0.1\fP
+   % \fBccdsmooth in=map1 out=map11 gauss=0.1\fP
+   % \fBccdsmooth in=map2 out=map22 gauss=0.1\fP
+   % \fBmv map00 int\fP
+   % \fBccdmath in=int,map11     out=vel  fie=%2/%1\fP
+   % \fBccdmath in=int,vel,map22 out=sig  fie="sqrt(%3/%1-%2*%2)"\fP
+   % \fBrm map11 map22\fP
+.fi
+Alternatively, with the option of using negative \fBmoment\fPs, one can
+also use (assuming no smoothing implemented):
+.nf
+    % \fBsnapgrid in=nbody.dat out=int moment=0\fP
+    % \fBsnapgrid in=nbody.dat out=vel moment=-1\fP
+    % \fBsnapgrid in=nbody.dat out=sig moment=-2\fP
+.fi
+Consider now the situation where a coordinate is regularly sampled,
+with N values between A and B. In order to grid these, one would
+normally use a range=A-dx/2:B+dx/2, where dx=(B-A)/(N-1).  One
+can also make a grid with N cells with emission, 
+and K blank cells between
+each valued cell (K would be typically small, perhaps 1 or 2). With
+NK=(K+1)N-K and dx=(B-A)/(NK-1), a
+range=A-dx/2:B+dx/2 is used.  If this is done
+in both the X and Y dimension, the program
+\fIccdintpol(1NEMO)\fP can be used to create a bi-linearly
+interpolated grid with more pixels for a seemingly higher
+sampled map. Most likely the option \fBmean=t\fP will have
+to be used to conserve units between runs with different
+values of K.
+.PP
+Here is an example of making a gridded map of ungridded data. Both
+unweighted, and weighted. Suppose the snapshot has the weights stored
+in the \fIAux\fP field, and we use these as weights
+(i.e. sum(mass*Aux)/sum(Aux) would be the quantity of interest).
+The unweighted average uses the \fBmean=t\fP key:
+.nf
+    snapgrid ... out=map0 evar=m mean=t
+.fi
+but the weighted average computes the two maps seperately and uses
+\fIccdmath(1NEMO)\fP to divide them to get the desired result:
+.nf
+    snapgrid ... out=map1 evar='m*aux' 
+    snapgrid ... out=map2 evar='aux' 
+    ccdmath in=map1,map2 out=map3 fie="ifeq(%2,0,0,%1/%2)"
+.fi
+with an additional safeguard to set cells to 0 if no emission with
+found in them.
+.SH KINEMETRY
+Krajnovic et al. (2006) popularized kinemetry, a description of line of sight
+velocities in terms of the first four moments (v, sigma, h3 and h4). The following
+example shows how to create these maps with \fBsnapgrid\fP:
+.nf
+  % snapgrid ...
+.fi
+.SH UNITS
+Units are maintained in the same way as in snapshots, they don't have
+a specific name, but carry their normal meaning 'length', 'velocity'
+and 'mass'. Since \fIsnapgrid\fP calculates (surface/space) densities,
+its units are formally 'mass' per square 'length' times 'velocity'
+to the power \fBmoment\fP. Notice the \fBmean=\fP keyword,
+which prevents division by the cellsize.
+.PP
+When channel maps are produced (\fBmoment=0\fP), 
+the data are not normalized w.r.t. the
+convolving velocity beam. For a rectangular beam (\fBvrange=vmin:vmax\fP)
+the data should formally be divided by \fB(vmax-vmin)\fP, for a 
+gaussian beam (\fBvrange=vmean,vsig\fP) by \fBvsig*sqrt(2*pi)\fP.
+Also remember that a gaussian beam has \fBFWHM = 2.355*sigma\fP.
+.PP
+Although \fIsnapscale(1NEMO)\fP can also be used, after a snapshot has
+been gridded into a map/cube, \fIccdsky(1NEMO)\fP can optionally be
+used to rescale a cube in astronomical units (degrees and m/s) such 
+that exported FITS files can be compared directly with model generated
+FITS files.
+.SH BUGS
+Combinations of large snapshots and large images may run into memory
+problems since both the snapshot and the image(s) must fit into memory
+to obtain turbo speeds. Use non-negative \fBmoment\fPs to avoid
+having to allocate one or two extra images in addition to the
+snapshot and the image. 
+.PP
+Sky projections do not guarantee flux conservation. 
+.SH "SEE ALSO"
+snapgridsmooth(1NEMO), snapmap(1NEMO),
+snaprotate(1NEMO), snapslit(1NEMO), snapifu(1NEMO), snapsmooth(1NEMO), uns_2dplot(1NEMO), snapaxsym(1NEMO), wcs(1NEMO),
+tsf(1NEMO), snapccd(1NEMO), ccdintpol(1NEMO), ccdsky(1NEMO), image(5NEMO), 
+.PP
+http://www.iinet.com.au/~watson/nngridr.html
+.PP
+http://www.ncarg.ucar.edu//ngmath/natgrid/nnhome.html (based on NNGRIDR)
+.PP
+http://tdc-www.harvard.edu/software/skypic/
+.PP
+http://dipastro.pd.astro.it/~cosmo/Splotch/
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +2.5i
+src/nbody/image  	snapgrid.c
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+19-jan-89	V1.0: Created	PJT
+12-mar-89	V1.1: added emisitivity evar	PJT
+2-nov-90	V2.0: allow stacked snapshots	PJT
+21-oct-91	V3.0: moment -1,-2 implemented	PJT
+12-jun-92	V3.1: added times=	PJT
+18-jul-92	V3.2: fixed bug when moment<0 and stacked snapshots	PJT
+30-jul-93	V4.0: allow multiple  evar's - default is now stack=f	PJT
+18-jun-98	V4.4: added xlab/ylab/zlab and allow range[0]>range[1]	PJT
+8-may-04	V5.0: added proj= to optionallaly allow sky projections	PJT
+7-feb-06	V5.1: added integrate=t to deal with 3D density points	PJT
+2-mar-11	V5.3: moment -3,-4 implemented	PJT
+18-may-12	V5.4: added smoothing in VZ (szvar)
+14-feb-13	V6.0: units changed on a cube (now xyz-density instead of xy-surface brightness)	PJT
+.fi 

@@ -1,0 +1,387 @@
+.TH GETPARAM 3NEMO "24 November 2007"
+.SH NAME
+getXparam, hasvalue, isaparam, initparam, finiparam, stop \- main startup and command line processing.
+.SH SYNOPSIS
+.nf
+.B #include <stdinc.h>
+.B #include <getparam.h>
+.PP
+string defv[]={
+	"key1=val1\\n   Example help for key1",
+	"key2=val2\\n	Example help for key2",
+	"VERSION=1.0\\n 30-apr-2002 pjt",
+	NULL,
+};
+
+string usage="Example usage for program";
+.fi
+string cvsid="$Id:
+$";
+.nf
+.PP
+.B void initparam(string *argv, string *defv)
+.B void finiparam(void)
+.PP
+.B void stop(int level)
+.PP
+.B string getparam(string name)
+.B int getiparam(string name)
+.B long getlparam(string name)
+.B double getdparam(string name)
+.B bool getbparam(string name)
+.PP
+.B string *getargv(int *argc)
+.PP
+.B int indexparam(string basename, int idx)
+.B string getparam_idx(string basename,int idx)
+.B int getiparam_idx(string basename,int idx)
+.B long getlparam_idx(string basename,int idx)
+.B double getdparam_idx(string basename,int idx)
+.B bool getbparam_idx(string basename,int idx)
+.PP
+.B void putparam(string name,string value)
+.B void promptparam(string name,string prompt)
+.PP
+.B bool hasvalue(string name)
+.B bool isaparam(string name)
+.B bool updparam(string name)
+
+.B int getparamstat(string);
+
+.B extern int error_level;
+.B extern int debug_level;
+.B extern int yapp_level;
+.B extern int help_level;
+.PP
+    undocumented:
+.B      _bell_level
+.B      _history
+.B      _review_flag
+.B      _yapp_dev
+.B      _yapp_string
+.B      _help_string
+.B      _argv_string
+.PP
+
+.fi
+.SH DESCRIPTION
+These functions provide a simple and uniform mechanism for 
+command line processing (see also nemomain(3NEMO) for
+an even simpler approach). Input as well
+as output (storage) of selected parameters can be controlled via
+command line parameters.
+First, \fIinitparam\fP is called to set up values associated with a
+set of possible keyword names; 
+after this \fIgetparam\fP and any of its relatives may be called
+to access and/or parse the value associated with a specified 
+keyword. \fIfiniparam\fP  should be called before the program
+ends, to ensure any outstanding requests are dealt with
+(e.g. writing updated keyword files, see HELP and DEBUG below),
+or optionally complain about unprocessed command line arguments.
+Output of parameters is described in \fIoutparam(3NEMO)\fP.
+.PP
+\fIinitparam\fP is called with two arguments:
+the argument vector
+\fIargv\fP which is passed to \fImain\fP, and a similar vector
+\fIdefv\fP which determines the set of legal keyword names and their
+default values.
+More precisely, \fIdefv\fP is of the form
+.PP
+.RS
+.nf
+\fBstring defv[] = { "\fIname\fP=\fIvalue\fP\\n\fIhelp\fP", . . ., "VERSION=x.y", NULL };\fP
+.fi
+.RE
+.PP
+\fIinitparam\fP determines a value for each \fIname\fP in \fIdefv\fP
+by scanning the command line arguments in \fIargv\fP, any values supplied
+in a keyword file (see below) and finally adopting the value supplied by
+\fIdefv\fP if no other value can be found. Note the recommended 
+(but not enforced)
+usage of the \fBVERSION\fP keyword; this version ID will be used
+to tag the history of datafiles which were created by programs, and 
+will also warn users when outdated keyword files are used (see below).
+.PP
+Arguments specified in \fIargv\fP are matched with names specified in
+\fIdefv\fP either one of two ways.
+Those appearing to the left of the first argument containing an embedded
+"=" sign are \fImatched by position\fP: the first such argument is associated
+with the first name listed in \fIdefv\fP, and so on; it is an error if
+more arguments are supplied in \fIargv\fP than names are supplied in
+\fIdefv\fP.
+The remaining arguments must all be of the form
+"\fIname\fP=\fIvalue\fP", and are \fImatched by keyword\fP: \fIname\fP
+must appear in \fIdefv\fP, and \fIvalue\fP is associated with \fIname\fP.
+It is an error to specify more than one \fIvalue\fP for a given \fIname\fP.
+If getparam is compiled with MINMATCH, keyword names are also matched in
+minimum match mode.
+.PP
+An exception to commandline parsing is made for any arguments that
+follow the standalone command line argument
+"--". The function \fIgetargv()\fP can be used to get access
+to any arguments that follow (and including) "--". The returned
+array simply points into the original \fIchar **argv\fP, but starts
+at the location of "--". The returned \fIargc\fP therefore only 
+counts the number of arguments after  (and including) "--", and thus
+making argv[0] be "--".
+.PP
+Depending on a user specified \fBhelp_level\fP (see below) parameters may also
+be set by reading them from a keyword file. The keyword file is unique for
+each program, and has the name "\fIprogram\fP\fB.def\fP". Although there
+is some control over the directory in which these keyword files should
+be located (\fB$NEMODEF\fP, but more on that later), 
+it is dangerous to use keyword files during multiple sessions since
+NEMO does not use a file locking mechanism.
+Command line keyword values are always favored over values from a keyword file.
+.PP
+Once \fIinitparam\fP has returned, the value associated with a \fIname\fP
+may be obtained (as a \fBstring\fP) by \fIgetparam\fP, or directly 
+converted to an
+\fBint\fP, \fBlong\fP, \fBdouble\fP, or \fBbool\fP by the functions
+\fIgetiparam\fP, \fIgetlparam\fP, \fIgetdparam\fP, and \fIgetbparam\fP
+respectively.
+The latter recognizes the digit "1" or any string starting with one of
+"tTyY" as TRUE, and "0" or any string starting with one of "fFnN" as FALSE.
+All the \fIgetXparam\fP function can do simple parsing of expressions,
+see \fInemoinp(3NEMO)\fP for some extended rules. Also note that 
+\fIgetparam\fP returns a string into private space, that should not
+be modified or freed! An single parameter
+integer that starts with the \fB0x\fP string, can also be parsed
+as a hexdecimal value (see \fIstrtol(3)\fP).
+.PP
+\fBgetparamstat\fP is currently only available to provide ZENO compatibility,
+it currently triggers a call to \fIerror(3NEMO)\fP when called.
+.PP
+As a special case, the contents of \fIargv\fP[0], which is the name used
+to invoke the process, are associated with the keyword name \fBargv0\fP.
+This is useful when reporting errors from library routines which may
+have no other way of determining what program called them; for example,
+.PP
+.RS
+.nf
+  \fBprintf("sqrt in %\|s: negative arg\\n", getparam("argv0"));\fP
+.fi
+.RE
+.PP
+could be used to print an error message from a square-root procedure,
+giving the name of the program in which the error occured. The macro
+\fPgetargv0()\fP, defined in getparam.h, can also be used for this,
+instead of called getparam().
+This technique is used by the routine,
+\fIerror(3NEMO)\fP; it reports the program name in
+square brackets before the string is output. 
+.PP
+The optional \fBusage\fP and \fBcvsid\fP strings, that will need to
+be defined by the user, can be
+queried with the \fBhelp=u\fP and \fBhelp=I\fP options.
+.SH REQUIRED ARGUMENTS
+Arguments with default values (as listed in \fIdefv\fP) of "\|???"
+are required; \fIinitparam\fP will print an informative message and
+quit if no value for such an argument can be obtained from \fIargv\fP.
+This feature is handy for things which must be specified or for which
+no reasonable default exists.
+.SH VERSION
+It is good (NEMO) programming practice to give your program a
+VERSION id. We refer to this as the \fIinternal\fP VERSION
+id. The NEMO technique has historically been by adding
+it as the last keyword, \fBVERSION\fP, in upper case.  Its value
+should be of the form \fBx.y\fP, where \fBx\fP is the major
+version number, and \fBy\fP the minor version number. Sometimes
+a subversion labeled \fBa, b, c, ...\fP has been added. 
+.PP
+Not only does this enable the running task to warn users if
+outdated keyword files are used, but also it provides an automated
+way to label the data history with the version of the program used
+to generate that data. A minor version number conflict will result
+in a warning message, but a major one will result in a fatal error
+message. If your program has changed data format, or keywords
+have changed meaning or name, it is adviced to change the major 
+version number.
+.PP
+The \fIexternal\fP VERSION id is the id stored in some
+external keyword database, (such as the commandline or
+a keyword file), that is supplied to the running task.
+This would make it possible for 
+programs to refuse execution if the internal and 
+external VERSION id do not match. We do not currently employ this
+technique. Most NEMO programs have a section labeled \fBUPDATE HISTORY\fP
+in which old version ID's are labeled by time, comment and author.
+.SH INDEXED KEYWORDS
+The \fBindexparam\fP and \fBgetparam_idx\fP family provides one way
+of access to indexed keywords. Indexed keywords are defined in the \fBdefv\fP vector
+by a basename that ends in with the \fB#\fP symbol, which can at runtime
+be replaced by any set of non-negative integers, e.g. \fBnaxis#\fP can be used
+to for example define \fBnaxis1=10\fP, \fBnaxis4=4\fP
+(note the index is actually 0 based). It is up to the
+programmer to decipher missing elements (e.g. using \fBisaparam\fP or
+\fBindexparam\fP).
+.PP
+\fIindexparam(basename,-1)\fP returns the largest index that was found,
+\fIindexparam(basename,-2)\fP returns 0 if the keyword is not an indexed
+keyword, and  \fIindexparam(basename,idx)\fP, for \fIidx >= 0\fP,
+will check existence (1=true) for a specific index. 
+.SH HELP FUNCTIONS
+Besides interpreting the command line, \fIinitparam\fP provides some
+assistance to the user via an additional argument (in addition to those
+defined in \fIdefv\fP), namely
+.PP
+.RS
+.nf
+\fBhelp=\fIoption\fP,\fIoption\fP,...\fP
+.fi
+.RE
+.PP
+If this argument, which must be specified by name, appears in \fIargv\fP,
+\fIinitparam\fP will generate some helpful information before returning.
+Possible options include
+.TP 18n
+\fBa\fP
+\- print program name and command line arguments,
+.br
+.ns
+.TP 18n
+\fBp,k\fP
+\- print program name and all parameter values,
+.br
+.ns
+.TP 18n
+\fBd,v\fP
+\- print program name and default values,
+.br
+.ns
+.TP 18n
+\fBn\fP
+\- print newlines after every parameter/default values,
+.br
+.ns
+.TP 18n
+\fBo\fP
+\- show output keywords (see \fIoutparam(3NEMO)\fP)
+.br
+.ns
+.TP 18n
+\fBc\fP
+\- show CPU usage: clock, user, system, child-user, child-system and cpu-tick-0
+.br
+.ns
+.TP 18n
+\fBq\fP
+\- exit after other help requests.
+.br
+.ns
+.TP 18n
+\fBu\fP
+\- show usage string
+.br
+.ns
+.TP 18n
+\fBh\fP
+\- show key and help strings
+.br
+.ns
+.TP 18n
+\fBt\fP
+\- show help as MIRIAD doc file (expert mode)
+.br
+.ns
+.TP 18n
+\fBt\fP
+\- show help as KHOROS pane file (expert mode)
+.br
+.ns
+.TP 18n
+\fBi\fP
+\- show some internal variables of the user interface (expert mode)
+.PP
+These options must be abbreviated to one character.
+For example,
+.PP
+.RS
+.nf
+\fBhelp\fP=\fBd,q\fP
+.fi
+.RE
+.PP
+will print defaults and then quit (actually, the comma is not needed).
+.PP
+This feature may be disabled by including an entry for \fBhelp\fP in
+\fIdefv\fP, in which case help processing is left to the applications
+program (not recommended).
+.PP
+An environment variable \fBHELP\fP or the system keyword \fBhelp=\fP
+can be set to a non-zero number to change to
+various levels of interactive input if implemented.
+.SH OUTPUT KEYS
+The system keyword \fBoutkeys=\fP\fIkey1,key2,...\fP controls which 
+pre-defined output keys (see \fIoutparam(3NEMO)\fP) are going to 
+output to NEMO's persistent global keyword database.
+.SH DEBUGGING
+The system keyword \fBdebug=\fP\fIdebug_level\fP is checked
+for by the \fIinitparam\fP call. It sets the \fBdebug_level\fP to the
+requested value. Any calls to \fIdprintf(3NEMO)\fP will only
+be send to the standard error output device,(\fIstderr\fP), if
+\fBdebug\fP is less or equal than \fBdebug_level\fP. Any initial
+setting of \fBdebug_level\fP is also done through an environment variable
+\fBDEBUG\fP, but overriden by the \fBdebug=\fP keyword.
+.SH FILES
+.ta +1i
+.nf
+~/src/kernel/io   	getparam.c 
+~/src/kernel/cores	error.c (stop)
+.fi
+.SH SEE ALSO
+environ(5), dprintf(3NEMO), error(3NEMO), nemoinp(3NEMO), nemomain(3NEMO), outparam(3NEMO)
+.SH DIAGNOSTICS
+Complains via \fIerror(3NEMO)\fP or the \fIlocal_error()\fP function
+about extra arguments, unknown arguments,  etc.  This will generally result
+in a stopped program.
+.SH BUGS
+The code to access \fIenviron\fP has only been implemented for the system
+environment variables \fBDEBUG, YAPP, HISTORY, BELL, REVIEW, ERROR, ARGV\fP 
+and \fBHELP\fP. 
+.PP
+Some undocumented features. The \fINEMO Users Guide\fP is often
+more complete.
+.PP
+A key-less parameter that contains an '=' sign confuses the parser and will
+most likely complain about an unknown parameter. E.g. "i%%128==0"
+will return \fIParameter "i%128" unknown\fP.
+.SH EXAMPLES
+Here are some examples of usage of such a user interface. Assume we have
+a program \fBp\fP, which has keywords \fBa\fP, \fBb\fP and \fBc\fP, of
+which \fBc\fP is an indexed keyword
+.nf
+% p help=
+p a=1 b=2 c#= VERSION=0.1
+
+% p help=h
+a                : keyword a [1]
+b                : keyword b [2]
+c#               : indexed keyword c []
+VERSION          : PJT [0.1]
+
+% p a=2
+% p c2=1 c0=1.2
+
+% mkplummer . 1000000 help=c
+CPU_USAGE mkplummer : 7.84    6.99 0.42  0.00 0.00  6202936
+
+.fi
+.SH AUTHOR
+Joshua Barnes, Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1i +3.5i
+xx-nov-86	created                         	Joshua Barnes
+16-oct-87	add system keyword host=        	Peter Teuben
+9-mar-88	add system keyword debug=       	PJT
+21-apr-88	interactive input                	PJT
+24-nov-88	editor mode in help=              	PJT
+6-mar-89	added nemoinp parsing of getXparam	PJT
+28-nov-94	V3 rewrite, many new features, deleted some others	PJT
+12-feb-95	added updparam
+20-jan-02	re-implemented indexed keywords			PJT
+12-jul03	added getargv()		PJT
+13-may-04	added help=c	PJT
+29-dec-04  	added help=I and documented CVSID	PJT
+.fi

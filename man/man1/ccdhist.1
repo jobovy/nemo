@@ -1,0 +1,133 @@
+.TH CCDHIST 1NEMO "25 February 2013"
+.SH NAME
+ccdhist \- histogram plotter and gaussian fit for image data
+.SH SYNOPSIS
+.PP
+\fBccdhist in=\fPinfile [parameter=value]
+.SH DESCRIPTION
+\fIccdhist\fP plots a histogram and computes the first 
+4 moments of points obtained from the data values of an
+\fIimage(5NEMO)\fP cube.
+It calculates the mean, dispersion,
+skewness and kurtosis. It then plots the data in the form of a histogram,
+optionally with a 'best' gaussian fit and residuals. It can also plot
+a cumulative histogram of the data. 
+.PP
+The median is also optionally computed, for which an 
+alternate sorting routine can be selected (if available). 
+.PP
+Using the \fBnsigma\fP keyword, outliers can be removed
+and statistics re-computed (a.k.a. sigma-clipping).
+.PP
+This program was derived from \fItabhist(1NEMO)\fP, which works on ASCII tables,
+and derived much of it's user interface from that program.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword is also
+given:
+.TP 20
+\fBin=\fIinfile\fP
+input file, in tabular format [no default].
+.TP
+\fBxmin=\fIx_min\fP
+Minimum value along X-axis to include 
+[default: autoscaling on minimum of datapoints].
+.TP
+\fBxmax=\fIx_max\fP
+Maximum value along X-axis to include 
+[default: autoscaling on maximum of datapoints].
+.TP
+\fBbins=\fIn_bins\fP
+If one number is given, it is the number of (equal size) bins between 
+min and max.  If more than one number is given, they are the bin edges
+(thus one more than the number of bins need to be supplied).
+[default: \fB16\fP].
+.TP
+\fBmaxcount=\fIcount\fP
+Maximum count value per bin plotted along the Y-axis
+[default: autoscaling].
+.TP
+\fBylog=t|f\fP
+Take log of Y-axis? This option is really redundant, since
+\fItabmath(1NEMO)\fP can handle any transformation
+[default: \fBf\fP].
+.TP
+\fBxlab=\fIx-label\fP
+Label along the X-axis [default: \fBvalue\fP].
+.TP
+\fBylab=\fIy-label\fP
+Label along the Y-axis [default: \fBN\fP or \fBlog(N)\fP].
+.TP
+\fBheadline=\fItext\fP
+Random verbiage, will be plotted along right top of plot for identification
+[default: none].
+The left top will contain the filename \fIinfile\fP.
+.TP
+\fBtab=t|f\fP
+Table output? If false, a plot using your current \fIyapp(5NEMO)\fP
+device will be given. If true, a simple ascii version of a histogram
+is shown. The default choice of \fBbins=16\fP keeps all the information
+on a simple 80*24 screen.
+[Default: \fBf\fP]
+.TP
+\fBgauss=t|f\fP
+If true, plot output will contain
+a gaussian fit. The "best" gaussian fit is the
+one that has the same mean, dispersion and integrated area
+as the data. [Default: \fBt\fP].
+.TP
+\fBresidual=t|f\fP
+If true, the residual (data - fit) will be plotted as a dashed line.
+[Default: \fBt\fP].
+.TP
+\fBcumul=t|f\fP
+Plot a cumulative histogram instead. If set, the keywords gauss, residual,
+and ylog are automatically re-set to false. 
+[Default: \fBf\fP].
+.TP
+\fBintegrate=t|f\fP
+Integrate the cumulative histogram, instead of number count. This option
+makes no sense when cumulative is not selected.
+[Default: \fBf\fP].
+.TP
+\fBmedian=t|f\fP
+Compute median too? This can be timeconsuming for large numbers of points.
+[Default: \fBt\fP].
+.\" @todo   what about torben method?
+.TP
+\fBmedian=\fP
+If used, use this as blankval. Default: none.
+.TP
+\fBdual=t|f\fP
+Dual pass over the data, subtracting the mean. This can be important
+if the data have a large average value with a small spread around the mean.
+Notice that in this mode the mean is subtracted but never added to
+the min/max/mean/median etc. 
+Default: f
+.TP
+\fBnsigma=\fI
+Delete points more than nsigma times the sigma from the mean. Also known
+as sigma-clipping. After each
+point sigma and mean are recomputed. [Default: none]
+.\" @todo   iter= to do it a few times?   what about robust=
+.TP
+\fBsort=\fP\fIsort_mode\fP
+.SH BUGS
+Points that fall exactly on the boundary of a bin, are added to the
+right side. Another way of saying is that a cell includes the left side,
+but is open ended on the right side, i.e. [---). Note this behavior is
+exactly opposite that of SM's behavior, which was used to compare results.
+.SH "SEE ALSO"
+tabhist(1NEMO), ccdstat(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH FILES
+.nf
+.ta +3.0i
+~/src/image/misc	sources
+.fi
+.SH "UPDATE HISTORY"
+.nf
+.ta +1.0i +4.0i
+8-feb-2011	V1.0: cloned off tabhist	PJT
+.fi
+

@@ -1,0 +1,58 @@
+.TH SNAPMODY 1NEMO "10 June 2011"
+.SH NAME
+snapmody \- convert snapshot to Mody's pos-vel files 
+.SH SYNOPSIS
+\fBmodysnap\fP [parameter=value]
+.SH DESCRIPTION
+\fBsnapmody\fP converts snapshot-style datasets from
+the \fIn-mody\fP MOND N-body integrator to a standard
+NEMO \fIsnapshot(5NEMO)\fP. 
+.PP
+It is also automatically called by \fIrunmond(1NEMO)\fP
+to convert the input conditions, from \fIsnapshot(5NEMO)\fP
+format, into the format that the \fIrmond\fP program
+understands.
+.PP
+Note: this program is forced
+to convert to single precision, even if the input dataset
+is in double precision.
+.PP
+Output files from QuMond are the same as MODY files, except
+they don't carry a header.
+.SH PARAMETERS
+The following parameters are recognized in any order if the keyword
+is also given:
+.TP 20
+\fBin=\fP
+Input snapshot file. No default.
+No default.
+.TP
+\fBout=\fP
+Output  mody pos-vel file (moutXX.bin style).
+.TP
+\fBout2=\fP
+If given, this NEMO history of the input dataset is written here. Default: none
+.TP
+\fBswap=t|f\fP
+Swap bytes in each int/float if endianism differs .
+Not implemented yet.
+.TP
+\fBheader=t|f\fP
+Write a header?  Needed for MODY style, but e.g. QuMOND only carries
+particle information.
+Default: true
+.SH CAVEAT
+Will only process the first snapshot.
+.SH SEE ALSO
+rungb, rmond, runmond(1NEMO), modysnap(1NEMO), snapshot(5NEMO)
+.SH FILES
+$NEMO/src/nbody/io/snapmody.c  -- code
+.SH AUTHOR
+Peter Teuben
+.SH UPDATE HISTORY
+.nf
+.ta +1.0i +4.0i
+25-Feb-09	V1.0 Created 
+10-mar-09	V1.1 added out2=	PJT
+10-jun-11	V1.2 added header=	PJT
+.fi

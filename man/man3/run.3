@@ -1,0 +1,76 @@
+.TH RUN 3NEMO "16 September 2013"
+.SH NAME
+run_ \- utility functions to aid running programs in a clean directory
+.SH SYNOPSIS
+.nf
+\fB#include <nemo.h>\fP
+\fB#include <run.h>\fP
+.PP
+\fBint run_mkdir(string name);\fP
+\fBint run_cd(string name);\fP
+\fBint run_sh(string cmd);\fP
+\fBint run_popen1(string exe, string file);\fP
+.fi
+.SH DESCRIPTION
+See also \fInemo(1NEMO)\fP in the description how to
+run non-NEMO programs.
+.PP
+This interface encourages a unified approach how to
+run non-NEMO programs from a NEMO frontend. 
+.PP
+In particular, the "runme" script created by \fIrunbulgerot(1NEMO)\fP
+should be employed by all run environments.  
+.PP
+The \fBrun_popen1\fP is meant to simulate the
+.nf
+      echo file | exe
+.fi
+style of running a program. The more general \fBrun_sh\fP deals with
+most cases such as
+.nf
+      exe < infile > outfile
+.fi
+with optional \fIinfile\fP and \fIoutfile\fP
+.SH EXAMPLE
+In a typical example, work is done inside of a clean run directory,
+because alien programs often use a parameter file with a fixed
+name, and thus cannot easily run side by side in the same
+directory. Here's a typical example:
+.nf
+
+   string rundir = getparam("rundir");
+   string exe    = getparam("exe");
+   char tmp[256];
+   stream fstr;
+   string cmd = "#! /bin/sh\\n" 
+                " rm -rf foobar.dat\\n" 
+                " %s <foobar.inp >foobar.log 2>&1\\n";
+
+   run_mkdir(rundir);
+
+   sprintf(tmp,"%s/foobar.dat",rundir);
+   fstr = stropen(tmp,"w");
+   fprintf(fstr,"%d",getiparam("n"));
+   fprintf(fstr,"%g",getrparam("x"));
+   strclose(fstr);
+
+   sprintf(tmp,"%s/%s",rundir,"runme");
+   fstr = stropen(tmp,"w");
+   fprintf(fstr,cmd,exefile);
+   strclose(fstr);
+
+   run_cd(rundir);
+   run_sh("sh runme");
+
+.fi
+The creation of the "runme" script is not really needed, the \fIrun_sh()\fP
+could directory use the 
+.SH SEE ALSO
+nemo(1NEMO)
+.SH AUTHOR
+Peter Teuben
+.SH HISTORY
+.nf
+.ta +1i +4i
+16-sep-2013	document created	PJT
+.fi
