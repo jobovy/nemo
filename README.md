@@ -2,6 +2,18 @@
 
 NEMO Stellar Dynamics Toolbox
 
+## NEMO in bash
+
+AFAIK, ``NEMO`` needs to be built in a C-type shell, which you can
+start using ``csh``. After installation, but still in the C-type shell,
+one can create a bash version of ``nemo_start`` using
+
+```
+src/scripts/mk_nemo_start.sh > nemo_start.sh
+```
+
+This file can then be sourced in one's ``.bashrc`` to start ``NEMO``.
+
 ## This repository
 
 This is a git version of the ``NEMO Stellar Dynamics Toolbox``
