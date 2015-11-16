@@ -98,9 +98,10 @@ namespace {
 	A[0]*= sQ;
 	A[1]*= sQ;
 	A[2]*= sQ;
-      } else
+      } else {	
 	P = A[0] = A[1] = A[2] = 0;
 	error("LogPot: wrong number (%d) of dimensions, only allow 3D\n",NDIM);
+      }
     }
   };
 } // namespace {
