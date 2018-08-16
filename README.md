@@ -2,6 +2,11 @@
 
 NEMO Stellar Dynamics Toolbox
 
+## This repository
+
+This is a git version of the ``NEMO Stellar Dynamics Toolbox``
+repository, made in 2015. The CVS version is contained in the ``cvs`` branch (from 2015). Note that the official version of the NEMO repository can be found [at this URL](https://github.com/teuben/nemo). You probably want to use the official version.
+
 ## NEMO in bash
 
 AFAIK, ``NEMO`` needs to be built in a C-type shell, which you can
@@ -14,10 +19,10 @@ src/scripts/mk_nemo_start.sh > nemo_start.sh
 
 This file can then be sourced in one's ``.bashrc`` to start ``NEMO``.
 
-## This repository
+## Setup of this repository
 
 This is a git version of the ``NEMO Stellar Dynamics Toolbox``
-repository. The CVS version is contained in the ``cvs`` branch.
+repository. The CVS version is contained in the ``cvs`` branch (from 2015). Note that the official version of the NEMO repository can be found [at this URL](https://github.com/teuben/nemo).
 
 The CVS-specific directories were removed by finding them recursively
 as follows in Python::
